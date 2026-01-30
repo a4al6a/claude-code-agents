@@ -128,6 +128,63 @@ Located in `examples/test-quality-low-score/` - demonstrates an expression parse
 ### Example 5: Test Quality Assessment - High Score
 Located in `examples/test-quality-high-score/` - demonstrates the same expression parser with well-designed tests following TDD principles, achieving a high Farley Score. Shows best practices for test design.
 
+## Installation
+
+### Quick Install (All Agents)
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/claude-code-agents.git
+cd claude-code-agents
+
+# Install all agents
+./install.sh
+```
+
+### Installation Options
+
+```bash
+# List available agents
+./install.sh list
+
+# Check installation status
+./install.sh status
+
+# Install all agents (with overwrite prompt for existing)
+./install.sh install
+
+# Install all agents (force overwrite without prompts)
+./install.sh install -f
+
+# Install a specific agent
+./install.sh install code-smell-detector
+
+# Uninstall a specific agent
+./install.sh uninstall code-smell-detector
+
+# Uninstall all agents
+./install.sh uninstall
+```
+
+### Supported Platforms
+
+The installer works on:
+- **macOS** (zsh/bash)
+- **Linux** (bash)
+- **Windows** (Git Bash, WSL)
+
+### Manual Installation
+
+If you prefer manual installation, copy the agent `.md` files to `~/.claude/agents/`:
+
+```bash
+mkdir -p ~/.claude/agents
+cp code-smell-detector/code-smell-detector.md ~/.claude/agents/
+# ... repeat for other agents
+```
+
+After installation, restart Claude Code or start a new session to use the agents.
+
 ## Getting Started
 
 1. Choose the appropriate pipeline based on your needs
