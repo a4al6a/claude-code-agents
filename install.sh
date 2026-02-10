@@ -36,18 +36,17 @@ AGENT_DEFS=(
     "clean-coder:clean-coder-agent.md:"
     "code-smell-detector:code-smell-detector.md:"
     "refactoring-expert:refactoring-expert.md:"
-    "test-design-reviewer:test-design-reviewer.md:"
     "legacy-code-expert:legacy-code-expert.md:"
     "domain-driven-design:ddd-architect-agent.md:ddd-expert-knowledge-base.md"
     "cognitive-load-analyzer:cognitive-load-analyzer.md:"
-    "test-design-reviewer-v2:test-design-reviewer-v2.md:"
+    "test-design-reviewer:test-design-reviewer.md:"
 )
 
 # Skill definitions: "agent-folder:skill-folder-name"
 # Maps agents to their skill directories under <agent-folder>/skills/<skill-folder>/
 SKILL_DEFS=(
     "cognitive-load-analyzer:cognitive-load-analyzer"
-    "test-design-reviewer-v2:test-design-reviewer"
+    "test-design-reviewer:test-design-reviewer"
 )
 
 # Find skill definition by agent folder name

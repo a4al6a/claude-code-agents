@@ -43,11 +43,6 @@ Specializes in safely modifying legacy code that lacks tests. Based on Michael F
 
 **Use when:** You need to modify code that has no tests, break dependencies to enable testability, or introduce tests into existing codebases.
 
-#### test-design-reviewer
-Evaluates test quality using Dave Farley's testing principles. Scores test suites against eight properties: Understandable, Maintainable, Repeatable, Atomic, Necessary, Granular, Fast, and First (TDD). Produces a weighted "Farley Score" with detailed analysis and improvement recommendations.
-
-**Use when:** You want to assess the quality of your tests, identify flaky or brittle tests, or ensure your test suite follows TDD best practices.
-
 ### Codebase Assessment Agents
 
 #### cognitive-load-analyzer
@@ -55,7 +50,7 @@ Calculates a Cognitive Load Index (CLI) score (0-1000) for a codebase, measuring
 
 **Use when:** You want to assess how complex a codebase is to understand, identify cognitive hotspots, prioritize refactoring, or prepare for developer onboarding.
 
-#### test-design-reviewer-v2
+#### test-design-reviewer
 Evaluates test code quality using Dave Farley's 8 Properties of Good Tests, producing a Farley Index score (0-10) with per-property breakdown, signal evidence, worst offenders, and prioritized recommendations. Uses a two-phase methodology: static signal detection (deterministic) blended 60/40 with LLM semantic assessment. Supports Java, Python, JavaScript/TypeScript, Go, and C#.
 
 **Use when:** You want a quantitative assessment of test suite quality, need to identify test smells across a codebase, or want evidence-anchored recommendations for improving test design.
