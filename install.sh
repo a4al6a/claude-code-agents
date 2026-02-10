@@ -21,8 +21,9 @@ else
     NC=''
 fi
 
-# Target directory for Claude Code agents
+# Target directories for Claude Code agents and skills
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,7 +39,27 @@ AGENT_DEFS=(
     "test-design-reviewer:test-design-reviewer.md:"
     "legacy-code-expert:legacy-code-expert.md:"
     "domain-driven-design:ddd-architect-agent.md:ddd-expert-knowledge-base.md"
+    "cognitive-load-analyzer:cognitive-load-analyzer.md:"
 )
+
+# Skill definitions: "agent-folder:skill-folder-name"
+# Maps agents to their skill directories under <agent-folder>/skills/<skill-folder>/
+SKILL_DEFS=(
+    "cognitive-load-analyzer:cognitive-load-analyzer"
+)
+
+# Find skill definition by agent folder name
+find_skill_def() {
+    local search="$1"
+    for def in "${SKILL_DEFS[@]}"; do
+        local agent_folder="${def%%:*}"
+        if [[ "$agent_folder" == "$search" ]]; then
+            echo "$def"
+            return 0
+        fi
+    done
+    return 1
+}
 
 # Parse agent definition
 get_agent_folder() {
@@ -113,6 +134,11 @@ list_agents() {
             if [[ -n "$extras" ]]; then
                 echo -e "    ${BLUE}(includes: $extras)${NC}"
             fi
+            local skill_def=$(find_skill_def "$folder" 2>/dev/null || true)
+            if [[ -n "$skill_def" ]]; then
+                local skill_name="${skill_def#*:}"
+                echo -e "    ${BLUE}(skill: $skill_name)${NC}"
+            fi
         else
             echo -e "  ${RED}○${NC} $folder (file not found)"
         fi
@@ -132,7 +158,17 @@ check_status() {
         local target_path="$CLAUDE_AGENTS_DIR/$file"
 
         if [[ -f "$target_path" ]]; then
-            echo -e "  ${GREEN}✓${NC} $folder - installed"
+            local skill_info=""
+            local skill_def=$(find_skill_def "$folder" 2>/dev/null || true)
+            if [[ -n "$skill_def" ]]; then
+                local skill_name="${skill_def#*:}"
+                if [[ -d "$CLAUDE_SKILLS_DIR/$skill_name" ]]; then
+                    skill_info=" + skill"
+                else
+                    skill_info=" (skill missing)"
+                fi
+            fi
+            echo -e "  ${GREEN}✓${NC} $folder - installed${skill_info}"
             ((installed++)) || true
         else
             echo -e "  ${RED}✗${NC} $folder - not installed"
@@ -141,7 +177,8 @@ check_status() {
     done
     echo ""
     echo -e "Installed: ${GREEN}$installed${NC} | Not installed: ${RED}$not_installed${NC}"
-    echo -e "Target directory: ${BLUE}$CLAUDE_AGENTS_DIR${NC}"
+    echo -e "Agents directory: ${BLUE}$CLAUDE_AGENTS_DIR${NC}"
+    echo -e "Skills directory: ${BLUE}$CLAUDE_SKILLS_DIR${NC}"
     echo ""
 }
 
@@ -149,6 +186,10 @@ ensure_target_dir() {
     if [[ ! -d "$CLAUDE_AGENTS_DIR" ]]; then
         echo -e "${YELLOW}Creating agents directory: $CLAUDE_AGENTS_DIR${NC}"
         mkdir -p "$CLAUDE_AGENTS_DIR"
+    fi
+    if [[ ! -d "$CLAUDE_SKILLS_DIR" ]]; then
+        echo -e "${YELLOW}Creating skills directory: $CLAUDE_SKILLS_DIR${NC}"
+        mkdir -p "$CLAUDE_SKILLS_DIR"
     fi
 }
 
@@ -199,6 +240,19 @@ install_agent() {
                 echo -e "    ${GREEN}+${NC} Installed $extra_file"
             fi
         done
+    fi
+
+    # Install associated skills if any
+    local skill_def=$(find_skill_def "$folder" 2>/dev/null || true)
+    if [[ -n "$skill_def" ]]; then
+        local skill_name="${skill_def#*:}"
+        local skill_source="$SCRIPT_DIR/$folder/skills/$skill_name"
+        local skill_target="$CLAUDE_SKILLS_DIR/$skill_name"
+        if [[ -d "$skill_source" ]]; then
+            rm -rf "$skill_target"
+            cp -r "$skill_source" "$skill_target"
+            echo -e "    ${GREEN}+${NC} Installed skill: $skill_name"
+        fi
     fi
 }
 
@@ -251,6 +305,17 @@ uninstall_agent() {
                     echo -e "    ${GREEN}-${NC} Removed $extra_file"
                 fi
             done
+        fi
+
+        # Remove associated skills if any
+        local skill_def=$(find_skill_def "$folder" 2>/dev/null || true)
+        if [[ -n "$skill_def" ]]; then
+            local skill_name="${skill_def#*:}"
+            local skill_target="$CLAUDE_SKILLS_DIR/$skill_name"
+            if [[ -d "$skill_target" ]]; then
+                rm -rf "$skill_target"
+                echo -e "    ${GREEN}-${NC} Removed skill: $skill_name"
+            fi
         fi
     else
         echo -e "  ${YELLOW}!${NC} $folder was not installed"

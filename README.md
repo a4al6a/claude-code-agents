@@ -48,6 +48,13 @@ Evaluates test quality using Dave Farley's testing principles. Scores test suite
 
 **Use when:** You want to assess the quality of your tests, identify flaky or brittle tests, or ensure your test suite follows TDD best practices.
 
+### Codebase Assessment Agents
+
+#### cognitive-load-analyzer
+Calculates a Cognitive Load Index (CLI) score (0-1000) for a codebase, measuring how much mental effort it demands from developers. Analyzes 8 dimensions: Structural Complexity, Nesting Depth, Volume/Size, Naming Quality, Coupling, Cohesion, Duplication, and Navigability. Uses sigmoid normalization, P90-weighted aggregation, and a Python calculation library for deterministic, reproducible results.
+
+**Use when:** You want to assess how complex a codebase is to understand, identify cognitive hotspots, prioritize refactoring, or prepare for developer onboarding.
+
 ## Agent Pipelines
 
 ### Pipeline 1: Feature Development (Problem → Stories → Implementation)
@@ -189,6 +196,13 @@ If you prefer manual installation, copy the agent `.md` files to `~/.claude/agen
 mkdir -p ~/.claude/agents
 cp code-smell-detector/code-smell-detector.md ~/.claude/agents/
 # ... repeat for other agents
+```
+
+Some agents (e.g., cognitive-load-analyzer) include skills that must be copied to `~/.claude/skills/`:
+
+```bash
+mkdir -p ~/.claude/skills
+cp -r cognitive-load-analyzer/skills/cognitive-load-analyzer ~/.claude/skills/
 ```
 
 After installation, restart Claude Code or start a new session to use the agents.
