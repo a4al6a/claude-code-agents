@@ -65,9 +65,16 @@ The relative ordering (U,M > R > A,N,G,T > F) is supported by cross-framework co
 |---|---|
 | 9-10 | Proper abstractions; changes to implementation rarely break tests; verifies behavior not implementation |
 | 7-8 | Good separation of concerns; occasional brittleness |
-| 5-6 | Some coupling to implementation; moderate refactoring pain |
-| 3-4 | Tightly coupled to implementation; tests break with minor changes |
-| 1-2 | Reflection to access private fields; tests mirror implementation structure exactly |
+| 5-6 | Some coupling to implementation; moderate refactoring pain; some over-specified mock interactions |
+| 3-4 | Tightly coupled to implementation; tests break with minor changes; verify with exact counts and ordering; tests assert on internal details via captured arguments |
+| 1-2 | Reflection to access private fields; tests mirror implementation structure exactly; tests describe HOW software works rather than WHAT it achieves |
+
+**Test theatre guidance for LLM assessment**: When evaluating Maintainable, the LLM must specifically check for:
+- **Over-specified mock interactions**: Tests using verify() with exact call counts (`times(1)`), call ordering (`InOrder`), or `verifyNoMoreInteractions`. Ask: "Would a behaviour-preserving refactoring break this test?" If yes, the test is over-specified.
+- **Testing internal details via captured arguments**: Tests that use ArgumentCaptor / `.call_args` to inspect internal state of objects passed to mocks (e.g., asserting on `captor.getValue().getInternalStatus()`).
+- **White-box mock expectations**: Mock expectations that mirror internal if/else branches -- e.g., `verify(service).getPremiumDiscount()` paired with `verify(service, never()).getStandardDiscount()`.
+- **High verify-to-assert ratio**: Tests with many `verify()` calls but few `assertEquals()` calls test interactions (implementation) rather than outcomes (behaviour).
+- **Note**: Simple `verify(mock).method()` without exact counts is legitimate for verifying side effects. Only flag when verification over-constrains implementation.
 
 ### R -- Repeatable
 
@@ -96,8 +103,13 @@ The relative ordering (U,M > R > A,N,G,T > F) is supported by cross-framework co
 | 9-10 | Every test adds unique value; no redundancy; parameterized tests for variations |
 | 7-8 | Most tests valuable; minor redundancy |
 | 5-6 | Some tests feel like checkbox exercises; moderate redundancy |
-| 3-4 | Several redundant tests; framework testing; trivial assertions |
-| 1-2 | Many tests add no value; assertTrue(true); disabled tests accumulating |
+| 3-4 | Several redundant tests; framework testing; trivial assertions; some mock tautologies |
+| 1-2 | Many tests add no value; assertTrue(true); disabled tests accumulating; tests that only verify mock return values; tests with no production code exercised |
+
+**Test theatre guidance for LLM assessment**: When evaluating Necessary, the LLM must specifically check for:
+- **Mock tautology**: Tests that configure a mock's return value and then assert that the mock returns that same value, with no production code in between. These tests are logically equivalent to `x = 5; assert x == 5` and prove nothing about the system.
+- **No production code exercised**: Tests where every object is a mock and no real class is instantiated. Ask: "If I deleted all production code, would this test still pass?" If yes, the test has zero value.
+- **Tests that would pass regardless**: Any test whose outcome is predetermined by its own setup, independent of production code behaviour.
 
 ### G -- Granular
 
@@ -128,8 +140,13 @@ Note: "single outcome" is distinct from "single assertion statement." Multiple a
 | 9-10 | Clear evidence of test-first approach; tests drive design; behavior-focused names |
 | 7-8 | Likely test-first; good design influence |
 | 5-6 | Unclear if test-first; tests may be afterthoughts |
-| 3-4 | Test structure mirrors implementation; likely test-after |
-| 1-2 | Tests clearly written after code; follow implementation structure; coverage patches |
+| 3-4 | Test structure mirrors implementation; likely test-after; mock-heavy tests with weak assertions |
+| 1-2 | Tests clearly written after code; follow implementation structure; coverage patches; tests with no production code exercised |
+
+**Test theatre guidance for LLM assessment**: When evaluating First (TDD), the LLM should note that:
+- Tests with no production code exercised (all mocks, no real SUT) could never have been written test-first, since there was nothing to drive the design of.
+- Mock-heavy tests that only verify interactions suggest the developer wrote the production code first and then wrote tests to confirm what the code already does ("test-after verification"), not to drive its design.
+- TDD-driven tests naturally focus on observable outputs because the test is written before the implementation details exist.
 
 ## Two-Phase Assessment
 
@@ -142,6 +159,7 @@ Note: "single outcome" is distinct from "single assertion statement." Multiple a
 ### Phase 2: LLM Assessment (controlled non-determinism)
 - Read tests holistically: does the test suite feel understandable?
 - Assess naming quality semantically (beyond pattern matching)
+- **Detect test theatre**: identify mock tautologies, tests with no production code under test, over-specified mock interactions, and tests coupled to implementation details rather than behaviour (see per-property "Test theatre guidance" sections above)
 - Evaluate TDD evidence from design patterns static analysis cannot detect
 - Adjust static scores up or down based on contextual judgment
 - Produce a "judgment delta" for each property

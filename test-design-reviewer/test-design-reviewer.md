@@ -22,7 +22,7 @@ In subagent mode (Task tool invocation with 'execute'/'TASK BOUNDARY'), skip gre
 These 7 principles diverge from defaults -- they define your specific methodology:
 
 1. **Read-only analysis**: Analyze but never modify code. No Write or Edit tools. Output is returned as structured text, not written to files unless explicitly requested by the caller.
-2. **Two-phase scoring**: Score each property through static signal detection first (deterministic), then LLM semantic assessment (controlled). Blend at 60/40 static/LLM per property. Static analysis detects structural quality; LLM assessment addresses semantic quality (wrong assertions, misleading names, missing edge cases).
+2. **Two-phase scoring**: Score each property through static signal detection first (deterministic), then LLM semantic assessment (controlled). Blend at 60/40 static/LLM per property. Static analysis detects structural quality and mock anti-patterns; LLM assessment addresses semantic quality (wrong assertions, misleading names, missing edge cases, test theatre).
 3. **Per-test-method granularity**: Collect signals at the individual test method level. Aggregate to file level (mean for positives, P90 for negatives -- worst offenders must surface). Aggregate to suite level via LOC-weighted mean.
 4. **Evidence-anchored scoring**: Every property score cites specific code locations and signal counts. A score without evidence is not a score -- it is a guess.
 5. **Conservative base score**: When no signals are detected for a property, default to 5.0 (Fair). No-signal means unknown quality, not good quality.
@@ -33,26 +33,31 @@ These 7 principles diverge from defaults -- they define your specific methodolog
 
 ### Phase 1: Discovery (2-3 turns)
 - Identify test file locations using naming conventions and directory patterns (test/, tests/, *_test.*, *Test.*, *.spec.*, *.test.*)
-- Detect primary language and test framework from imports and annotations
+- Detect primary language, test framework, and mocking framework from imports and annotations
 - Count total test files, test methods, and LOC
 - If over 50 test files, activate deterministic sampling
-- Gate: language identified, framework identified, test file inventory complete
+- Gate: language identified, test framework identified, mocking framework identified (if present), test file inventory complete
 
 ### Phase 2: Signal Collection (6-10 turns)
 - Load the `signal-detection-patterns` skill for language-specific patterns
 - For each test file (or sampled subset):
   1. Identify test method boundaries (framework-specific markers)
   2. Scan for negative signals per property: sleep, reflection, shared state, ordering, I/O, magic numbers, cryptic names, trivial assertions, mega-tests
-  3. Scan for positive signals per property: behavior names, nested organization, parameterized tests, AAA structure, builders, parallel markers
-  4. Count assertions per test method
-  5. Record signal locations (file:line) for evidence
-- Attribute multi-property signals to all relevant properties (e.g., Thread.sleep affects both R and F)
+  3. Scan for mock anti-patterns (if mocking framework detected):
+     - **Mock tautology (AP1)**: mock return value configured then asserted on same mock with no production code in between (affects N, M)
+     - **No production code exercised (AP2)**: all objects are mocks, no real class instantiated (affects N, M, T)
+     - **Over-specified interactions (AP3)**: verify with exact counts, call ordering, verifyNoMoreInteractions (affects M)
+     - **Testing internal details (AP4)**: ArgumentCaptor deep inspection, verify(never()) mirroring branches, type assertions, high verify-to-assert ratio (affects M)
+  4. Scan for positive signals per property: behavior names, nested organization, parameterized tests, AAA structure, builders, parallel markers
+  5. Count assertions per test method
+  6. Record signal locations (file:line) for evidence
+- Attribute multi-property signals to all relevant properties (e.g., Thread.sleep affects both R and F; mock tautology affects both N and M)
 - Gate: signal inventory complete for all 8 properties; each signal has a file:line reference
 
 ### Phase 3: Scoring (3-5 turns)
 - Load the `farley-properties-and-scoring` skill for rubrics and formula
 - **Static scoring**: For each property, compute a 0-10 score based on signal densities (negative signal count / test method count, positive signal count / test method count), applying the rubric from the skill
-- **LLM scoring**: For each property, assess the test code holistically against the rubric, providing a 0-10 score with brief justification. Focus on semantic aspects that static analysis misses: naming quality, assertion appropriateness, design influence
+- **LLM scoring**: For each property, assess the test code holistically against the rubric, providing a 0-10 score with brief justification. Focus on semantic aspects that static analysis misses: naming quality, assertion appropriateness, design influence, test theatre (mock tautologies, no production code exercised, over-specified interactions, internal detail testing -- see per-property "Test theatre guidance" in the scoring skill)
 - **Blend**: `final_property_score = 0.60 * static_score + 0.40 * llm_score` per property
 - **Farley Index**: Apply the weighted formula `(U*1.5 + M*1.5 + R*1.25 + A*1.0 + N*1.0 + G*1.0 + F*0.75 + T*1.0) / 9.0`
 - **Rating**: Map the Farley Index to the rating scale (Exemplary through Critical)

@@ -17,7 +17,7 @@ This document provides the evidence base for designing a **Test Design Reviewer*
 | Peruma et al., "tsDetect" (2020) | Academic tool | AST-based test smell detection across 19 smell types | Independent |
 | Pontillo et al., "Machine Learning-Based Test Smell Detection" (2024) | Academic | ML approaches to test smell classification | Independent |
 | Spadini et al., "Test Smells 20 Years Later" (Springer, 2022) | Empirical study | Validity and reliability of test smell detection; severity thresholds | Independent |
-| Reference implementation (test-design-reviewer/) | Prototype | Formula verification (arithmetic correctness) only — see limitations in section 9.1 | Derived from Farley |
+| Reference implementation (test-design-reviewer/) | Prototype | Formula verification (arithmetic correctness) only — see limitations in section 10.1 | Derived from Farley |
 
 ### 1.2 Cross-Referenced Findings
 
@@ -39,7 +39,7 @@ This document provides the evidence base for designing a **Test Design Reviewer*
 - *Modern Software Engineering* positions testability and maintainability as engineering foundations
 - Beck's Test Desiderata similarly elevates Readable and Behavioral/Structure-insensitive (the maintainability pair)
 - Meszaros's Goals of Test Automation foregrounds "Tests as Documentation" and "Tests as Specification"
-- **Limitation**: No empirical study has validated that 1.5x is the optimal weight. The specific multiplier comes from the reference implementation, not from independent evidence. See section 9.1.
+- **Limitation**: No empirical study has validated that 1.5x is the optimal weight. The specific multiplier comes from the reference implementation, not from independent evidence. See section 10.1.
 
 ---
 
@@ -295,7 +295,7 @@ Where each property score (U, M, R, A, N, G, F, T) ranges from 0.0 to 10.0.
 
 ### 5.4 Score Interpretation Examples (from reference implementation)
 
-> **Note on evidence status**: The reference implementation examples below were purpose-built to demonstrate the scoring formula — the high-score example was designed to exhibit excellent practices and the low-score example was designed to violate every property. They verify the formula's *arithmetic correctness* (the formula produces expected numbers given known inputs) but do not validate the formula's *predictive accuracy* (whether the weights correlate with actual test quality as judged by practitioners). See section 9.1 for the calibration roadmap.
+> **Note on evidence status**: The reference implementation examples below were purpose-built to demonstrate the scoring formula — the high-score example was designed to exhibit excellent practices and the low-score example was designed to violate every property. They verify the formula's *arithmetic correctness* (the formula produces expected numbers given known inputs) but do not validate the formula's *predictive accuracy* (whether the weights correlate with actual test quality as judged by practitioners). See section 10.1 for the calibration roadmap.
 
 **Exemplary (9.2/10)**: ExpressionParserTest using JUnit 5 @Nested classes, behavior-driven naming, parameterized tests, fresh instances per test, single assertions, pure computation, Arrange-Act-Assert throughout.
 
@@ -578,9 +578,54 @@ https://www.linkedin.com/pulse/tdd-properties-good-tests-dave-farley-iexge/
 
 ---
 
-## 9. Knowledge Gaps and Limitations
+## 9. Mock Anti-Patterns and Test Theatre
 
-### 9.1 Calibration Evidence Gap [HIGH PRIORITY]
+### 9.0.1 Overview
+
+Four mock-specific anti-patterns were identified that produce tests with zero or negative value while appearing structurally sound. These are collectively called "test theatre." Comprehensive research is documented in `docs/mock-anti-patterns-research.md` (22 sources, 9 mocking frameworks across 5 languages).
+
+**Key finding**: As of 2026-02-12, no mainstream static analysis tool (SonarQube, PMD, ESLint, tsDetect, testsmells.org) has rules for any of these patterns. The detection heuristics added to the `signal-detection-patterns` skill represent original contributions.
+
+### 9.0.2 The Four Anti-Patterns
+
+| Anti-Pattern | Severity | Farley Properties | Taxonomy References |
+|---|---|---|---|
+| **Mock Tautology** (AP1) | Critical | N, M | James Carr "The Mockery," Rainsberger "Tautological TDD," Mockito Wiki |
+| **No Production Code Exercised** (AP2) | Critical | N, M, T | James Carr "The Mockery," Khorikov "observable behavior vs implementation" |
+| **Over-Specified Interactions** (AP3) | High | M, A | Meszaros "Overspecified Software" / "Fragile Test," Beck "Structure-insensitive" |
+| **Testing Internal Details** (AP4) | High | M, U | James Carr "The Inspector," Khorikov "Structural Inspection," Meszaros "Behavior Sensitivity" |
+
+### 9.0.3 Detection Approach
+
+Detection uses both static signals and LLM rubric guidance:
+
+- **Static signals** (60% weight): Language-specific regex patterns detect mock setup/assert on same object (AP1), absence of production class instantiation (AP2), verify with exact counts/ordering (AP3), and ArgumentCaptor deep inspection / verify(never()) patterns (AP4). See `signal-detection-patterns` skill for per-framework patterns.
+- **LLM rubric guidance** (40% weight): Explicit instructions added to the N, M, and T property rubrics in `farley-properties-and-scoring` skill, directing the LLM to check for mock tautologies, tests with no SUT, over-specified interactions, and implementation coupling.
+
+### 9.0.4 Detection Confidence
+
+| Anti-Pattern | Static Detection Confidence | LLM Detection Confidence |
+|---|---|---|
+| AP1 (Mock Tautology) | MEDIUM -- regex catches common forms; misses variable aliasing | HIGH -- LLM can trace data flow semantically |
+| AP2 (No Production Code) | MEDIUM -- "no new RealClass" heuristic has false positives for static methods and setUp-injected SUTs | HIGH -- LLM can identify missing SUT |
+| AP3 (Over-Specified) | HIGH -- verify/times/InOrder patterns are syntactically distinctive | HIGH -- LLM can assess whether verification is essential vs over-specified |
+| AP4 (Internal Details) | MEDIUM -- composite signal (2+ of 6 indicators) reduces false positives | MEDIUM -- requires domain context to distinguish essential from over-specified |
+
+### 9.0.5 Mocking Frameworks Covered
+
+| Language | Frameworks | Status |
+|---|---|---|
+| Java | Mockito | Full coverage (AP1-AP4) |
+| Python | unittest.mock, pytest-mock | Full coverage (AP1-AP4) |
+| JavaScript/TypeScript | Jest mocks, Sinon | Full coverage (AP1-AP4) |
+| Go | testify/mock, gomock | Full coverage (AP1-AP3); AP4 partial (gomock lacks argument captors) |
+| C# | Moq, NSubstitute | Full coverage (AP1-AP4) |
+
+---
+
+## 10. Knowledge Gaps and Limitations
+
+### 10.1 Calibration Evidence Gap [HIGH PRIORITY]
 
 The reference implementation provides formula *verification* (the arithmetic is correct given known inputs), not formula *validation* (the weights produce scores that correlate with actual test quality as judged by practitioners).
 
@@ -592,18 +637,19 @@ The two reference examples (high-score: 9.2, low-score: 2.0) were purpose-built 
 3. Compare formula output against practitioner consensus
 4. Adjust weights and sigmoid parameters to maximize correlation
 
-### 9.2 Static Analysis Cannot Detect Semantic Quality
+### 10.2 Static Analysis Cannot Detect All Semantic Quality Issues
 
-Static analysis detects *structural* test quality — naming patterns, assertion counts, I/O usage, shared state. It cannot detect:
+Static analysis detects *structural* test quality — naming patterns, assertion counts, I/O usage, shared state. With the addition of mock anti-pattern detection (section 9), static analysis now also catches some *semantic* quality issues (mock tautologies, no production code exercised, over-specified interactions). However, it still cannot detect:
 
 - **Wrong assertions**: A test that asserts `assertEquals(42, calculate())` has perfect structure but may be verifying the wrong value
 - **Missing edge cases**: A test suite can score 10/10 on all structural properties while missing critical boundary conditions
 - **Misleading names**: A test named `shouldReturnUserWhenFound` that actually tests deletion would score well structurally
-- **Overtesting**: Tests that over-specify behavior (testing every implementation detail) can appear granular and understandable while being brittle
+- **Subtle mock tautologies**: Variable aliasing, helper-method indirection, and setUp-injected mocks can mask tautological patterns from regex-based detection
+- **Essential vs over-specified verification**: Whether `verify(times(1))` is an idempotency requirement or over-specification requires domain context
 
-The LLM assessment phase partially addresses these gaps but introduces its own limitation (see 9.3).
+The LLM assessment phase addresses these residual gaps with explicit test theatre rubric guidance (see `farley-properties-and-scoring` skill) but introduces its own limitation (see 10.3).
 
-### 9.3 LLM Assessment Introduces Non-Determinism
+### 10.3 LLM Assessment Introduces Non-Determinism
 
 Even with the reproducibility protocol (temperature 0, structured rubric, deterministic file selection), LLM-based scoring may vary across:
 - Different model versions (model updates change judgment)
@@ -612,7 +658,7 @@ Even with the reproducibility protocol (temperature 0, structured rubric, determ
 
 The 60/40 static/LLM blend limits the impact: even a 2-point LLM scoring difference on a property only shifts the blended score by 0.8 points. Recording the model identifier in the report enables consumers to account for model-version effects.
 
-### 9.4 Properties Not Captured by the Farley Framework
+### 10.4 Properties Not Captured by the Farley Framework
 
 Beck's Test Desiderata includes properties that Farley does not:
 
@@ -625,7 +671,7 @@ Beck's Test Desiderata includes properties that Farley does not:
 
 These properties are real and valuable but fall outside what a static+LLM code review can assess. They should be noted in reports as "dimensions not measured."
 
-### 9.5 Confidence Distribution
+### 10.5 Confidence Distribution
 
 | Confidence | % of Findings | Key Areas |
 |---|---|---|
@@ -635,7 +681,7 @@ These properties are real and valuable but fall outside what a static+LLM code r
 
 ---
 
-## 10. Sources
+## 11. Sources
 
 ### Primary Framework Sources
 - [Dave Farley, "TDD & The Properties of Good Tests" (LinkedIn)](https://www.linkedin.com/pulse/tdd-properties-good-tests-dave-farley-iexge/)
@@ -660,5 +706,14 @@ These properties are real and valuable but fall outside what a static+LLM code r
 - [Language-Agnostic Test Smell Detection (SBES 2024)](https://sol.sbc.org.br/index.php/sbes/article/download/30413/30219/)
 - [Samman Coaching — Test Desiderata Learning Hour](https://sammancoaching.org/learning_hours/test_design/test_desiderata.html)
 
+### Mock Anti-Pattern Sources
+- [James Carr, "TDD Anti-Patterns" (2006)](https://web.archive.org/web/20160605001457/http://blog.james-carr.org:80/2006/11/03/tdd-anti-patterns/) — Defines "The Mockery" and "The Inspector"
+- [J.B. Rainsberger, "The Curious Case of Tautological TDD" (2013)](https://blog.thecodewhisperer.com/permalink/the-curious-case-of-tautological-tdd) — Mock tautology definition
+- [Vladimir Khorikov, *Unit Testing: Principles, Practices, and Patterns* (Manning, 2020)](https://www.manning.com/books/unit-testing) — Observable behavior vs implementation details
+- [Khorikov, "Structural Inspection" (Enterprise Craftsmanship)](https://enterprisecraftsmanship.com/posts/structural-inspection) — Testing internal details
+- [Mockito Wiki, "How to write good tests"](https://github.com/mockito/mockito/wiki/How-to-write-good-tests) — Tautology avoidance
+- [Codepipes, "Software Testing Anti-Patterns" (2018)](https://blog.codepipes.com/testing/software-testing-antipatterns.html) — Testing internal implementation
+- Detailed research: `docs/mock-anti-patterns-research.md` *(22 sources, 9 frameworks, code examples in all languages)*
+
 ### Reference Implementation
-- Reference implementation: `test-design-reviewer/` *(formula verification only — see section 9.1)*
+- Reference implementation: `test-design-reviewer/` *(formula verification only — see section 10.1)*
