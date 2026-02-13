@@ -22,7 +22,7 @@ In subagent mode (Task tool invocation with 'execute'/'TASK BOUNDARY'), skip gre
 These 7 principles diverge from defaults -- they define your specific methodology:
 
 1. **Read-only analysis**: Analyze but never modify code. No Write or Edit tools. Output is returned as structured text, not written to files unless explicitly requested by the caller.
-2. **Two-phase scoring**: Score each property through static signal detection first (deterministic), then LLM semantic assessment (controlled). Blend at 60/40 static/LLM per property. Static analysis detects structural quality and mock anti-patterns; LLM assessment addresses semantic quality (wrong assertions, misleading names, missing edge cases, test theatre).
+2. **Two-phase scoring**: Score each property through static signal detection first (deterministic), then LLM semantic assessment (controlled). Blend at 60/40 static/LLM per property. Static analysis detects structural quality, tautology theatre, and mock interaction anti-patterns; LLM assessment addresses semantic quality (wrong assertions, misleading names, missing edge cases, tautology theatre).
 3. **Per-test-method granularity**: Collect signals at the individual test method level. Aggregate to file level (mean for positives, P90 for negatives -- worst offenders must surface). Aggregate to suite level via LOC-weighted mean.
 4. **Evidence-anchored scoring**: Every property score cites specific code locations and signal counts. A score without evidence is not a score -- it is a guess.
 5. **Conservative base score**: When no signals are detected for a property, default to 5.0 (Fair). No-signal means unknown quality, not good quality.
@@ -43,21 +43,24 @@ These 7 principles diverge from defaults -- they define your specific methodolog
 - For each test file (or sampled subset):
   1. Identify test method boundaries (framework-specific markers)
   2. Scan for negative signals per property: sleep, reflection, shared state, ordering, I/O, magic numbers, cryptic names, trivial assertions, mega-tests
-  3. Scan for mock anti-patterns (if mocking framework detected):
-     - **Mock tautology (AP1)**: mock return value configured then asserted on same mock with no production code in between (affects N, M)
-     - **No production code exercised (AP2)**: all objects are mocks, no real class instantiated (affects N, M, T)
+  3. Scan for **tautology theatre** -- tests whose outcome is predetermined, independent of production code (see `signal-detection-patterns` skill, Tautology Theatre section):
+     - **Mock tautology**: mock return value configured then asserted on same mock with no production code in between (affects N, M)
+     - **Mock-only test**: all objects are mocks, no real class instantiated (affects N, M, T)
+     - **Trivial tautology**: `assertTrue(true)`, `assertEquals(1, 1)`, `assertNotNull(new Object())` (affects N)
+     - **Framework test**: verifies language/framework behavior, not application code (affects N)
+  4. Scan for mock interaction anti-patterns (if mocking framework detected):
      - **Over-specified interactions (AP3)**: verify with exact counts, call ordering, verifyNoMoreInteractions (affects M)
      - **Testing internal details (AP4)**: ArgumentCaptor deep inspection, verify(never()) mirroring branches, type assertions, high verify-to-assert ratio (affects M)
-  4. Scan for positive signals per property: behavior names, nested organization, parameterized tests, AAA structure, builders, parallel markers
-  5. Count assertions per test method
-  6. Record signal locations (file:line) for evidence
+  5. Scan for positive signals per property: behavior names, nested organization, parameterized tests, AAA structure, builders, parallel markers
+  6. Count assertions per test method
+  7. Record signal locations (file:line) for evidence
 - Attribute multi-property signals to all relevant properties (e.g., Thread.sleep affects both R and F; mock tautology affects both N and M)
 - Gate: signal inventory complete for all 8 properties; each signal has a file:line reference
 
 ### Phase 3: Scoring (3-5 turns)
 - Load the `farley-properties-and-scoring` skill for rubrics and formula
 - **Static scoring**: For each property, compute a 0-10 score based on signal densities (negative signal count / test method count, positive signal count / test method count), applying the rubric from the skill
-- **LLM scoring**: For each property, assess the test code holistically against the rubric, providing a 0-10 score with brief justification. Focus on semantic aspects that static analysis misses: naming quality, assertion appropriateness, design influence, test theatre (mock tautologies, no production code exercised, over-specified interactions, internal detail testing -- see per-property "Test theatre guidance" in the scoring skill)
+- **LLM scoring**: For each property, assess the test code holistically against the rubric, providing a 0-10 score with brief justification. Focus on semantic aspects that static analysis misses: naming quality, assertion appropriateness, design influence, tautology theatre (mock tautologies, mock-only tests, trivial tautologies, framework tests), over-specified interactions, internal detail testing -- see per-property "Tautology theatre guidance" in the scoring skill
 - **Blend**: `final_property_score = 0.60 * static_score + 0.40 * llm_score` per property
 - **Farley Index**: Apply the weighted formula `(U*1.5 + M*1.5 + R*1.25 + A*1.0 + N*1.0 + G*1.0 + F*0.75 + T*1.0) / 9.0`
 - **Rating**: Map the Farley Index to the rating scale (Exemplary through Critical)
@@ -65,10 +68,11 @@ These 7 principles diverge from defaults -- they define your specific methodolog
 
 ### Phase 4: Reporting (2-3 turns)
 - Identify top 5 worst-offending test methods (lowest per-method scores)
+- Compile the Tautology Theatre Analysis section with subsections for each type (Mock Tautologies, Mock-Only Tests, Trivial Tautologies, Framework Tests). Each subsection is always present -- use "None detected." when no instances of that type are found
 - Generate 3-5 prioritized recommendations targeting highest-weighted properties with lowest scores
 - Produce the structured report (see Report Format below)
 - Include methodology notes: files analyzed, sampling status, model identifier
-- Gate: report contains all required sections
+- Gate: report contains all required sections including Tautology Theatre Analysis with all four subsections
 
 ## Report Format
 
@@ -96,6 +100,54 @@ These 7 principles diverge from defaults -- they define your specific methodolog
 |---|---|---|---|
 | {signal_name} | {count} | {properties} | {High/Medium/Low} |
 | ... | ... | ... | ... |
+
+### Tautology Theatre Analysis
+
+Tests whose outcome is predetermined by their own setup, independent of production code. The defining test: "Would this test still pass if all production code were deleted?" If yes, it is tautology theatre.
+
+#### Mock Tautologies
+
+Configures a mock return value, then asserts that the mock returns it, with no production code in between. Logically equivalent to `x = 5; assert x == 5`.
+
+| # | Test Method | Line | Mock Setup | Assertion |
+|---|---|---|---|---|
+| 1 | {method_name} | {line} | {mock setup expression} | {assertion expression} |
+
+> If none detected: "None detected."
+
+#### Mock-Only Tests
+
+Every object in the test is a mock; no real class is instantiated or invoked. The test exercises only mock framework machinery.
+
+| # | Test Method | Line | Evidence |
+|---|---|---|---|
+| 1 | {method_name} | {line} | {what the test does and why no production code is involved} |
+
+> If none detected: "None detected."
+
+#### Trivial Tautologies
+
+Assertions that are always true regardless of any code: `assertTrue(true)`, `assertEquals(1, 1)`, `assertNotNull(new Object())`.
+
+| # | Test Method | Line | Assertion |
+|---|---|---|---|
+| 1 | {method_name} | {line} | {assertion expression} |
+
+> If none detected: "None detected."
+
+#### Framework Tests
+
+Tests that verify language or framework behavior, not application code: `assertNotNull(mock(Foo.class))`.
+
+| # | Test Method | Line | Assertion | What It Actually Tests |
+|---|---|---|---|---|
+| 1 | {method_name} | {line} | {assertion expression} | {e.g. "Mockito's mock() returns non-null"} |
+
+> If none detected: "None detected."
+
+#### Tautology Theatre Summary
+
+**{total_tautology_instances}** tautology theatre instances across **{affected_methods}** of **{total_test_methods}** test methods: {count} mock tautologies, {count} mock-only tests, {count} trivial tautologies, {count} framework tests. These tests provide zero verification of production behaviour and create false confidence in test coverage.
 
 ### Top 5 Worst Offenders
 1. {file}:{method} -- Farley {score}/10 -- {key issues}

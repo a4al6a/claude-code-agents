@@ -38,6 +38,61 @@ This test suite is a comprehensive showcase of mock anti-patterns (AP1-AP4). Of 
 | No @ParameterizedTest | -- | entire file | N | Low |
 | No @BeforeEach reset | -- | entire file | A | Medium |
 
+### Tautology Theatre Analysis
+
+Tests whose outcome is predetermined by their own setup, independent of production code. The defining test: "Would this test still pass if all production code were deleted?" If yes, it is tautology theatre.
+
+#### Mock Tautologies
+
+Configures a mock return value, then asserts that the mock returns it, with no production code in between. Logically equivalent to `x = 5; assert x == 5`.
+
+| # | Test Method | Line | Mock Setup | Assertion |
+|---|---|---|---|---|
+| 1 | test_chargePayment | 38 | `when(gateway.charge(49.99)).thenReturn(true)` | `assertTrue(result)` on `gateway.charge(49.99)` |
+| 2 | test_reserveInventory | 51 | `when(inventory.reserve("SKU-1", 2)).thenReturn(true)` | `assertTrue(result)` on `inventory.reserve("SKU-1", 2)` |
+| 3 | test_everything | 230 | `when(gateway.charge(49.99)).thenReturn(true)` | `assertTrue(chargeResult)` on `gateway.charge(49.99)` |
+| 4 | test_everything | 233 | `when(inventory.reserve("SKU-1", 2)).thenReturn(true)` | `assertTrue(reserveResult)` on `inventory.reserve("SKU-1", 2)` |
+| 5 | test_everything | 236 | `when(gateway.refund(49.99)).thenReturn(true)` | `assertTrue(refundResult)` on `gateway.refund(49.99)` |
+
+#### Mock-Only Tests
+
+Every object in the test is a mock; no real class is instantiated or invoked. The test exercises only mock framework machinery.
+
+| # | Test Method | Line | Evidence |
+|---|---|---|---|
+| 1 | test_chargePayment | 37 | Calls `gateway.charge()` directly on mock; no `OrderService` instantiated |
+| 2 | test_reserveInventory | 50 | Calls `inventory.reserve()` directly on mock; no `OrderService` instantiated |
+| 3 | test_placeOrder_allMocks | 64 | Configures and calls 3 mocks directly; verifies all 3 calls; no real class |
+| 4 | test_notificationSent | 83 | Calls `notifier.sendConfirmation()` directly on mock; verifies it was called |
+| 5 | test_paymentFailed | 209 | Configures `gateway.charge()` to return false; asserts false; no `OrderService` |
+| 6 | test_everything | 224 | All operations on mocks; 10 assertions; no real class instantiated |
+| 7 | test_framework | 260 | All assertions on framework primitives and mock constructors |
+
+#### Trivial Tautologies
+
+Assertions that are always true regardless of any code: `assertTrue(true)`, `assertEquals(1, 1)`, `assertNotNull(new Object())`.
+
+| # | Test Method | Line | Assertion |
+|---|---|---|---|
+| 1 | test_everything | 249 | `assertNotNull(mock(PaymentGateway.class))` |
+| 2 | test_everything | 250 | `assertNotNull(mock(InventoryService.class))` |
+| 3 | test_everything | 251 | `assertNotNull(mock(NotificationService.class))` |
+| 4 | test_framework | 261 | `assertTrue(true)` |
+
+#### Framework Tests
+
+Tests that verify language or framework behavior, not application code.
+
+| # | Test Method | Line | Assertion | What It Actually Tests |
+|---|---|---|---|---|
+| 1 | test_framework | 262 | `assertNotNull(mock(PaymentGateway.class))` | Mockito's `mock()` returns non-null |
+| 2 | test_framework | 263 | `assertNotNull(mock(InventoryService.class))` | Mockito's `mock()` returns non-null |
+| 3 | test_framework | 264 | `assertNotNull(mock(NotificationService.class))` | Mockito's `mock()` returns non-null |
+
+#### Tautology Theatre Summary
+
+**19** tautology theatre instances across **8** of **12** test methods: 5 mock tautologies, 7 mock-only tests, 4 trivial tautologies, 3 framework tests. These tests provide zero verification of production behaviour and create false confidence in test coverage.
+
 ### Top 5 Worst Offenders
 
 1. **OrderServiceTest.java:224 `test_everything()`** -- Farley ~0.5/10 -- Mega-test combining AP1 (3 mock tautologies at lines 230-237), AP2 (no OrderService instantiated), AP3 (4 verify with times(1) at lines 243-246), and 4 trivial assertNotNull(mock) at lines 249-251. 10 assertions verifying nothing about production behavior. This single test has every anti-pattern.
@@ -46,7 +101,7 @@ This test suite is a comprehensive showcase of mock anti-patterns (AP1-AP4). Of 
 
 3. **OrderServiceTest.java:83 `test_notificationSent()`** -- Farley ~0.8/10 -- AP2: calls `notifier.sendConfirmation()` directly (line 84), then verifies it was called (line 86). No OrderService, no production code. The test verifies that Mockito's verify() works.
 
-4. **OrderServiceTest.java:260 `test_framework()`** -- Farley ~0.9/10 -- `assertTrue(true)` (line 261) tests the JUnit framework. `assertNotNull(mock(...))` (lines 262-264) tests Mockito's mock() method. Zero production relevance. This is test theatre in its purest form.
+4. **OrderServiceTest.java:260 `test_framework()`** -- Farley ~0.9/10 -- `assertTrue(true)` (line 261) tests the JUnit framework. `assertNotNull(mock(...))` (lines 262-264) tests Mockito's mock() method. Zero production relevance. This is tautology theatre in its purest form.
 
 5. **OrderServiceTest.java:64 `test_placeOrder_allMocks()`** -- Farley ~1.0/10 -- AP2: configures mocks (lines 65-66), calls mocks directly (lines 68-70) without instantiating OrderService, then verifies all three calls happened (lines 72-74). The test choreographs mock calls and verifies the choreography. 3 verifies, 0 asserts.
 

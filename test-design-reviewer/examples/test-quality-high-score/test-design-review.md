@@ -33,6 +33,30 @@ High quality test suite with minor improvement opportunities. Tests read like a 
 
 Zero negative signals detected for: Thread.sleep, reflection, shared state, ordering, file I/O, network, database, system time, random, environment variables, disabled tests, empty tests, trivial assertions, cryptic names, mock anti-patterns.
 
+### Tautology Theatre Analysis
+
+Tests whose outcome is predetermined by their own setup, independent of production code. The defining test: "Would this test still pass if all production code were deleted?" If yes, it is tautology theatre.
+
+#### Mock Tautologies
+
+None detected.
+
+#### Mock-Only Tests
+
+None detected.
+
+#### Trivial Tautologies
+
+None detected.
+
+#### Framework Tests
+
+None detected.
+
+#### Tautology Theatre Summary
+
+**0** tautology theatre instances across **0** of **31** test methods. No tautology theatre detected.
+
 ### Top 5 Worst Offenders
 
 This suite has no significantly weak tests. The following are the lowest-scoring methods, identified only because they have two assertions each (logical assertion groups, not true weaknesses):

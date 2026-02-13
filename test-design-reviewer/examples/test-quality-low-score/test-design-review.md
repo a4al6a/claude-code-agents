@@ -38,6 +38,37 @@ Tests may be harmful; consider rewriting from scratch. This test file violates e
 | Zero @Nested / @DisplayName / @ParameterizedTest | 0 positive signals across all 12 methods | U, N, G | Medium |
 | Zero behavior-driven naming (should/when/given) | 0 positive signals across all 12 methods | U, T | High |
 
+### Tautology Theatre Analysis
+
+Tests whose outcome is predetermined by their own setup, independent of production code. The defining test: "Would this test still pass if all production code were deleted?" If yes, it is tautology theatre.
+
+#### Mock Tautologies
+
+None detected.
+
+#### Mock-Only Tests
+
+None detected.
+
+#### Trivial Tautologies
+
+Assertions that are always true regardless of any code: `assertTrue(true)`, `assertEquals(1, 1)`, `assertNotNull(new Object())`.
+
+| # | Test Method | Line | Assertion |
+|---|---|---|---|
+| 1 | testTestFramework | 241 | `assertTrue(true)` |
+| 2 | testTestFramework | 242 | `assertFalse(false)` |
+| 3 | testTestFramework | 243 | `assertNotNull(new Object())` |
+| 4 | testTestFramework | 244 | `assertEquals(1, 1)` |
+
+#### Framework Tests
+
+None detected.
+
+#### Tautology Theatre Summary
+
+**4** tautology theatre instances across **1** of **12** test methods: 0 mock tautologies, 0 mock-only tests, 4 trivial tautologies, 0 framework tests. These tests provide zero verification of production behaviour and create false confidence in test coverage.
+
 ### Top 5 Worst Offenders
 
 1. **ExpressionParserTest.java:145 `testEverything()`** -- Farley ~0.5/10 -- Mega-test with 22 assertions covering 7 unrelated behaviors (arithmetic, parentheses, decimals, negatives, complex expressions, nested parentheses, whitespace, error conditions). If any assertion fails, the failure message gives no clue which behavior is broken. Name describes nothing about what is being verified. This single method should be at least 7 separate tests.

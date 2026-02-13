@@ -62,12 +62,12 @@ Static analysis detects *structural* test quality. It cannot detect wrong assert
 |---|---|---|
 | Parameterized tests | @ParameterizedTest, @Theory, pytest.mark.parametrize, test.each, table-driven tests | Positive |
 | Redundant test methods | Multiple tests with identical assertion patterns on same method | Negative |
-| Trivial assertions | assertTrue(true), assertNotNull on constructor, expect(1).toBe(1) | Negative |
-| Framework testing | Tests that verify language/framework behavior, not application code | Negative |
+| Trivial assertions | assertTrue(true), assertNotNull on constructor, expect(1).toBe(1) (see Tautology Theatre section) | Negative |
+| Framework testing | Tests that verify language/framework behavior, not application code (see Tautology Theatre section) | Negative |
 | Ignored/disabled tests | @Ignore, @Disabled, @Skip, pytest.mark.skip, it.skip, t.Skip | Negative |
 | Empty test bodies | Test methods with no executable statements | Negative |
-| Mock tautology | Mock return value configured then asserted on the same mock with no production code in between (see Mock Anti-Patterns section) | Negative |
-| No production code exercised | All objects in test are mocks; no real class instantiated or invoked (see Mock Anti-Patterns section) | Negative |
+| Mock tautology | Mock return value configured then asserted on the same mock with no production code in between (see Tautology Theatre section) | Negative |
+| No production code exercised | All objects in test are mocks; no real class instantiated or invoked (see Tautology Theatre section) | Negative |
 
 ### G -- Granular
 
@@ -102,9 +102,48 @@ Static analysis detects *structural* test quality. It cannot detect wrong assert
 
 Future enhancement: git history analysis (test files committed before/alongside production files) would strengthen T scoring. Feasible via `git log` within the agent.
 
+## Tautology Theatre
+
+Tests whose outcome is predetermined by their own setup, independent of production code. The defining test: **"Would this test still pass if all production code were deleted?"** If yes, it is tautology theatre.
+
+Tautology theatre is the umbrella term for four types of valueless tests:
+
+| Type | Severity | Description | Affects | Requires Mocks? |
+|---|---|---|---|---|
+| **Mock Tautology** | Critical | Configures a mock return value, then asserts the mock returns it (AP1 below) | N, M | Yes |
+| **Mock-Only Test** | Critical | Every object is a mock; no real class instantiated or invoked (AP2 below) | N, M, T | Yes |
+| **Trivial Tautology** | Medium | Assertions that are always true: `assertTrue(true)`, `assertEquals(1, 1)`, `assertNotNull(new Object())` | N | No |
+| **Framework Test** | Medium | Verifies language or framework behavior, not application code: `assertNotNull(mock(Foo.class))`, `assertTrue("hello".contains("ell"))` | N | No |
+
+All four types share the property that they provide zero verification of production behaviour and create false confidence in test coverage. Trivial Tautology and Framework Test can appear in any test suite, regardless of whether mocking is used. Mock Tautology and Mock-Only Test are specific to test suites that use mocking frameworks.
+
+Detection patterns for Mock Tautology and Mock-Only Test are detailed in the Mock Anti-Patterns section below. Detection patterns for Trivial Tautology and Framework Test are in the per-property signal tables (N -- Necessary) and the language-specific detection patterns.
+
+### Trivial Tautology Detection
+
+| Language | Pattern | Example |
+|---|---|---|
+| Java | `assertTrue\(true\)`, `assertFalse\(false\)`, `assertEquals\(\d+,\s*\d+\)` (same literal both sides), `assertNotNull\(new \w+\(` | `assertTrue(true)`, `assertEquals(1, 1)`, `assertNotNull(new Object())` |
+| Python | `assert\s+True`, `assert\s+1\s*==\s*1`, `self\.assertTrue\(True\)`, `assertIsNotNone\(\w+\(\)\)` where arg is a constructor | `assert True`, `self.assertEqual(1, 1)` |
+| JavaScript | `expect\(true\)\.toBe\(true\)`, `expect\(1\)\.toBe\(1\)`, `expect\(.*\)\.toBeTruthy\(\)` on literal | `expect(true).toBe(true)`, `expect(1).toBe(1)` |
+| Go | `assert\.True\(t,\s*true\)`, `assert\.Equal\(t,\s*(\d+),\s*\1\)` | `assert.True(t, true)`, `assert.Equal(t, 1, 1)` |
+| C# | `Assert\.IsTrue\(true\)`, `Assert\.AreEqual\(\d+,\s*\d+\)` (same literal), `Assert\.IsNotNull\(new ` | `Assert.IsTrue(true)`, `Assert.AreEqual(1, 1)` |
+
+### Framework Test Detection
+
+A test is a framework test when it asserts on the return value of a framework method with no application code involved. Common patterns:
+
+| Language | Pattern | Example |
+|---|---|---|
+| Java | `assertNotNull\(mock\(` or `assertNotNull\(Mockito\.mock\(`, assertions on `Collections.empty*`, `Optional.empty()` | `assertNotNull(mock(Foo.class))` |
+| Python | Assertions on `Mock()`, `MagicMock()`, `patch()` return values directly | `assertIsNotNone(Mock())` |
+| JavaScript | `expect(jest.fn()).toBeDefined()`, assertions on framework utilities | `expect(jest.fn()).toBeDefined()` |
+| Go | Assertions on `new(MockFoo)` directly | `assert.NotNil(t, new(MockFoo))` |
+| C# | `Assert.IsNotNull(new Mock<IFoo>())`, assertions on `Substitute.For<>()` | `Assert.IsNotNull(new Mock<IFoo>())` |
+
 ## Mock Anti-Patterns
 
-Tests that use mocking frameworks can appear structurally perfect (clean naming, single assertion, no I/O) while providing zero value. These four anti-patterns are collectively known as "test theatre" -- tests that look like tests but don't verify production behaviour. No mainstream static analysis tool (SonarQube, PMD, ESLint, tsDetect, testsmells.org) has rules for these patterns as of 2026.
+Tests that use mocking frameworks can appear structurally perfect (clean naming, single assertion, no I/O) while providing zero value. Mock Tautology (AP1) and Mock-Only Test (AP2) are part of the broader Tautology Theatre family (see above). Over-specified interactions (AP3) and Testing Internal Details (AP4) are not tautologies -- they do test production code, but they test HOW it works rather than WHAT it achieves, making them brittle. No mainstream static analysis tool (SonarQube, PMD, ESLint, tsDetect, testsmells.org) has rules for these patterns as of 2026.
 
 ### AP1 -- Mock Tautology (Severity: Critical)
 
