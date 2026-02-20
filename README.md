@@ -179,7 +179,7 @@ Located in `system-walkthrough/examples/ai-generated-fastapi/` - demonstrates th
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/claude-code-agents.git
+git clone https://github.com/andlaf-ak/claude-code-agents.git
 cd claude-code-agents
 
 # Install all agents
