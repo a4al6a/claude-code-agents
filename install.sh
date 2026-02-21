@@ -41,6 +41,7 @@ AGENT_DEFS=(
     "cognitive-load-analyzer:cognitive-load-analyzer.md:"
     "test-design-reviewer:test-design-reviewer.md:"
     "system-walkthrough:system-walkthrough.md:"
+    "software-system-auditor:software-system-auditor.md:"
 )
 
 # Skill definitions: "agent-folder:skill-folder-name"
@@ -49,6 +50,7 @@ SKILL_DEFS=(
     "cognitive-load-analyzer:cognitive-load-analyzer"
     "test-design-reviewer:test-design-reviewer"
     "system-walkthrough:system-walkthrough"
+    "software-system-auditor:software-system-auditor"
 )
 
 # Find skill definition by agent folder name

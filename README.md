@@ -43,6 +43,13 @@ Specializes in safely modifying legacy code that lacks tests. Based on Michael F
 
 **Use when:** You need to modify code that has no tests, break dependencies to enable testability, or introduce tests into existing codebases.
 
+### Compliance & Auditing Agents
+
+#### software-system-auditor
+Audits software systems against regulatory compliance frameworks, producing one separate audit report per selected regulation. Supports 12 frameworks: SOX, SOC 2, GDPR, HIPAA, PCI DSS 4.0, NIST CSF 2.0, ISO 27001:2022, FedRAMP, CCPA/CPRA, DORA, NIS2, and CMMC 2.0. Presents frameworks as a multi-select list, then runs a 7-phase audit workflow (SCOPE > DISCOVER > COLLECT > ANALYZE > SYNTHESIZE > REPORT > VERIFY) with cross-framework compliance mapping so a single finding is traced to every applicable regulation's specific control IDs. Includes 3 skill files covering regulatory frameworks, audit methodology, and a 15-control x 12-framework mapping matrix.
+
+**Use when:** You need to assess a codebase's compliance posture against one or more regulatory frameworks, generate audit evidence, or produce framework-specific remediation guidance.
+
 ### Codebase Assessment Agents
 
 #### cognitive-load-analyzer
@@ -149,6 +156,24 @@ Codebase → system-walkthrough → Slide Deck + Analysis Data
    - **test-design-reviewer**: Assess test quality for suites flagged as weak
 
 **Best for:** Developer onboarding, AI-generated code auditing, system documentation, architecture review
+
+### Pipeline 7: Compliance Auditing (Selection → Audit → Per-Framework Reports)
+
+```
+Codebase → software-system-auditor → Framework Selection (multi-select)
+                                            ↓
+                                   SCOPE → DISCOVER → COLLECT → ANALYZE → SYNTHESIZE → REPORT
+                                            ↓
+                                   One report per selected regulation
+```
+
+**Workflow:**
+1. **software-system-auditor**: Presents all 12 supported compliance frameworks for multi-select
+2. Runs 7-phase audit: scopes the system, discovers architecture, collects evidence, analyzes findings, synthesizes cross-framework mappings, generates reports
+3. Produces one separate audit report per selected regulation with framework-specific control IDs, compliance scores, and remediation guidance
+4. Cross-framework mapping ensures a single finding (e.g., missing MFA) appears in every relevant report mapped to that framework's requirements
+
+**Best for:** Regulatory compliance assessment, audit preparation, security posture evaluation, multi-framework gap analysis
 
 ## Examples
 
