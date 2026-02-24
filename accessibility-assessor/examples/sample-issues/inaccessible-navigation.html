@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<!--
+  Example: Inaccessible Navigation and Page Structure
+  This file demonstrates common accessibility failures in navigation,
+  landmarks, images, and interactive components.
+-->
+<html lang="en">
+<head>
+  <title>ACME Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; }
+
+    /* ISSUE: No landmark elements used - all divs (SC 1.3.1, Moderate) */
+    .header { background: #333; color: white; padding: 16px; }
+    .nav { background: #444; padding: 8px 16px; }
+    .content { padding: 24px; }
+    .sidebar { float: right; width: 200px; padding: 16px; }
+    .footer { background: #333; color: white; padding: 16px; text-align: center; }
+
+    .nav a { color: white; text-decoration: none; margin-right: 16px; }
+
+    /* ISSUE: Dropdown only works on hover - no keyboard trigger (SC 2.1.1, Serious) */
+    .dropdown { display: inline-block; position: relative; }
+    .dropdown-content { display: none; position: absolute; background: #444; min-width: 160px; z-index: 1; }
+    .dropdown:hover .dropdown-content { display: block; }
+    .dropdown-content a { display: block; padding: 8px 16px; }
+
+    .product-card {
+      border: 1px solid #ddd;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: inline-block;
+      width: 200px;
+      vertical-align: top;
+    }
+
+    /* ISSUE: Interactive card with no focus styles (SC 2.4.7, Serious) */
+    .product-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; }
+
+    /* ISSUE: "New" badge uses color alone to convey meaning (SC 1.4.1, Serious) */
+    .badge-new { color: red; font-weight: bold; }
+
+    /* ISSUE: Low contrast footer links (SC 1.4.3, Moderate) */
+    .footer a { color: #777777; }
+    /* #777777 on #333333 = 2.8:1 ratio, fails AA minimum of 4.5:1 */
+
+    .carousel-btn {
+      /* ISSUE: Tiny click target 12x12 (SC 2.5.8, Moderate) */
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid #999;
+      background: none;
+      cursor: pointer;
+    }
+    .carousel-btn.active { background: #333; }
+  </style>
+</head>
+<body>
+  <!-- ISSUE: No skip navigation link (SC 2.4.1, Moderate) -->
+
+  <!-- ISSUE: div instead of <header> landmark (SC 1.3.1, Moderate) -->
+  <div class="header">
+    <!-- ISSUE: Logo image missing alt text (SC 1.1.1, Serious) -->
+    <img src="logo.png">
+    <span style="font-size: 24px;">ACME Store</span>
+  </div>
+
+  <!-- ISSUE: div instead of <nav> landmark (SC 1.3.1, Moderate) -->
+  <div class="nav">
+    <a href="/">Home</a>
+
+    <!-- ISSUE: Dropdown inaccessible - hover only, no ARIA (SC 2.1.1, SC 4.1.2) -->
+    <div class="dropdown">
+      <a href="/products">Products</a>
+      <div class="dropdown-content">
+        <a href="/shoes">Shoes</a>
+        <a href="/clothing">Clothing</a>
+        <a href="/accessories">Accessories</a>
+      </div>
+    </div>
+
+    <a href="/about">About</a>
+    <!-- ISSUE: Generic link text (SC 2.4.4, Moderate) -->
+    <a href="/sale">Click here</a>
+  </div>
+
+  <!-- ISSUE: div instead of <main> landmark (SC 1.3.1, Moderate) -->
+  <div class="content">
+    <!-- ISSUE: Page has no h1 heading (SC 1.3.1, Moderate) -->
+    <h2>Featured Products</h2>
+
+    <!-- ISSUE: Product card is a div with onclick but no keyboard access (SC 2.1.1, Critical) -->
+    <div class="product-card" onclick="location.href='/product/1'">
+      <!-- ISSUE: Product image missing alt text (SC 1.1.1, Serious) -->
+      <img src="shoe-red.jpg" width="180">
+      <h4>Running Shoe</h4>
+      <!-- ISSUE: Heading hierarchy skip - h2 to h4 (SC 1.3.1, Moderate) -->
+      <p>$89.99</p>
+      <span class="badge-new">NEW</span>
+      <!-- ISSUE: "NEW" conveyed by color only (SC 1.4.1, Serious) -->
+    </div>
+
+    <div class="product-card" onclick="location.href='/product/2'">
+      <!-- ISSUE: Decorative/informative ambiguity - no alt attribute at all -->
+      <img src="shoe-blue.jpg" width="180">
+      <h4>Trail Runner</h4>
+      <p>$119.99</p>
+    </div>
+
+    <div class="product-card" onclick="location.href='/product/3'">
+      <!-- ISSUE: Alt text is just the filename (SC 1.1.1, Serious) -->
+      <img src="boot-brown.jpg" width="180" alt="boot-brown.jpg">
+      <h4>Hiking Boot</h4>
+      <p>$149.99</p>
+    </div>
+
+    <!-- Carousel with tiny dot navigation -->
+    <div class="carousel" style="margin-top: 24px;">
+      <h2>What's Trending</h2>
+      <div>
+        <!-- ISSUE: Carousel navigation buttons are tiny dots with no labels (SC 2.5.8, SC 1.1.1) -->
+        <button class="carousel-btn active"></button>
+        <button class="carousel-btn"></button>
+        <button class="carousel-btn"></button>
+      </div>
+    </div>
+
+    <!-- ISSUE: Table used for layout without role="presentation" (SC 1.3.1, Minor) -->
+    <table>
+      <tr>
+        <td>
+          <h3>Free Shipping</h3>
+          <p>On orders over $50</p>
+        </td>
+        <td>
+          <h3>Easy Returns</h3>
+          <p>30-day return policy</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ISSUE: div instead of <aside> landmark (SC 1.3.1, Moderate) -->
+  <div class="sidebar">
+    <h3>Categories</h3>
+    <!-- ISSUE: Links presented visually as list but not in a <ul> (SC 1.3.1, Moderate) -->
+    <a href="/shoes" style="display:block; margin-bottom:8px;">Shoes</a>
+    <a href="/clothing" style="display:block; margin-bottom:8px;">Clothing</a>
+    <a href="/accessories" style="display:block; margin-bottom:8px;">Accessories</a>
+  </div>
+
+  <!-- ISSUE: div instead of <footer> landmark (SC 1.3.1, Moderate) -->
+  <div class="footer">
+    <p>&copy; 2026 ACME Store</p>
+    <!-- ISSUE: Low contrast links in footer (SC 1.4.3) -->
+    <a href="/privacy">Privacy</a> |
+    <a href="/terms">Terms</a> |
+    <!-- ISSUE: Generic link text (SC 2.4.4, Moderate) -->
+    <a href="/help">Learn more</a>
+  </div>
+</body>
+</html>
