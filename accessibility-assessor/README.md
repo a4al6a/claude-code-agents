@@ -136,3 +136,7 @@ cp -r accessibility-assessor/skills/accessibility-assessor/* ~/.claude/skills/ac
 - Reports include a disclaimer that findings require review by a qualified accessibility specialist
 - Does not fix code or implement remediation — produces assessment reports with guidance
 - Uses sampling for large codebases (500+ template files) to manage scope
+
+## Attribution
+
+This agent has been created with the agentic framework [nWave](https://nwave.ai).
