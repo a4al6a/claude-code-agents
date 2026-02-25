@@ -22,8 +22,10 @@ else
 fi
 
 # Target directories for Claude Code agents and skills
-CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
-CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+# Can be overridden with --prefix to install project-local
+CLAUDE_PREFIX="$HOME"
+CLAUDE_AGENTS_DIR=""
+CLAUDE_SKILLS_DIR=""
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -114,14 +116,16 @@ print_usage() {
     echo "  status            Show installation status"
     echo ""
     echo "Options:"
+    echo "  --prefix <path>   Install to <path>/.claude/ instead of ~/.claude/"
     echo "  -f, --force       Overwrite existing agents without prompting"
     echo "  -h, --help        Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0                          # Install all agents (interactive)"
-    echo "  $0 install                  # Install all agents (interactive)"
+    echo "  $0                          # Install all agents to ~/.claude/"
     echo "  $0 install -f               # Install all agents (overwrite existing)"
     echo "  $0 install code-smell-detector  # Install specific agent"
+    echo "  $0 --prefix ~/repos/my-app  # Install to a project's .claude/ directory"
+    echo "  $0 --prefix ~/repos/my-app uninstall  # Uninstall from that project"
     echo "  $0 list                     # List available agents"
     echo "  $0 status                   # Check what's installed"
     echo ""
@@ -356,6 +360,14 @@ main() {
                 force="true"
                 shift
                 ;;
+            --prefix)
+                if [[ -z "$2" || "$2" == -* ]]; then
+                    echo -e "${RED}Error: --prefix requires a path argument${NC}"
+                    exit 1
+                fi
+                CLAUDE_PREFIX="$(cd "$2" && pwd)"
+                shift 2
+                ;;
             -h|--help)
                 print_header
                 print_usage
@@ -373,6 +385,10 @@ main() {
                 ;;
         esac
     done
+
+    # Resolve target directories after parsing --prefix
+    CLAUDE_AGENTS_DIR="$CLAUDE_PREFIX/.claude/agents"
+    CLAUDE_SKILLS_DIR="$CLAUDE_PREFIX/.claude/skills"
 
     print_header
 
