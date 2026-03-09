@@ -1,0 +1,61 @@
+{
+  "overall_score": 42,
+  "summary": "Logging present but unstructured (printf-style). No distributed tracing. No metrics emission. Health check endpoint exists but checks no dependencies.",
+  "logging": {
+    "coverage_score": 55,
+    "structured_pct": 0.1,
+    "library": "logging",
+    "level_appropriateness_score": 65,
+    "critical_paths_covered": 8,
+    "critical_paths_total": 15,
+    "sensitive_data_risks": [
+      { "file": "src/api/auth.py", "line": 34, "data_type": "email", "severity": "medium" }
+    ],
+    "debug_in_production_paths": 4
+  },
+  "tracing": {
+    "instrumented": false,
+    "library": "none",
+    "span_coverage": "none",
+    "context_propagation": false,
+    "correlation_id_present": false,
+    "correlation_id_in_logs": false,
+    "score": 0
+  },
+  "metrics": {
+    "library": "none",
+    "exposition_endpoint": null,
+    "request_metrics": false,
+    "error_metrics": false,
+    "latency_metrics": false,
+    "business_metrics": [],
+    "infrastructure_metrics": [],
+    "score": 0
+  },
+  "health_checks": {
+    "liveness": true,
+    "readiness": false,
+    "dependency_checks": [],
+    "startup": false,
+    "endpoint": "/health",
+    "score": 25
+  },
+  "alert_readiness": {
+    "identifiable_failure_modes": ["process_crash"],
+    "sli_slo_defined": false,
+    "runbooks_present": false,
+    "missing_signals": [
+      "No error rate monitoring",
+      "No latency tracking",
+      "No dependency health alerting",
+      "No database connection pool monitoring"
+    ],
+    "score": 10
+  },
+  "risk_distribution": { "critical": 2, "high": 4, "medium": 3, "low": 2 },
+  "recommendations": [
+    { "priority": 1, "title": "Add structured logging", "description": "Switch from printf-style to structlog with JSON output for log aggregation", "effort": "medium" },
+    { "priority": 2, "title": "Add OpenTelemetry tracing", "description": "Instrument service boundaries with spans and propagate trace context", "effort": "high" },
+    { "priority": 3, "title": "Add Prometheus metrics", "description": "Expose request count, error rate, and latency histograms at /metrics", "effort": "medium" }
+  ]
+}

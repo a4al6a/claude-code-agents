@@ -1,0 +1,40 @@
+{
+  "overall_score": 72,
+  "summary": "4.2% dead code ratio. 8 orphaned files, 12 unused exports, 3 zombie dependencies. 2 feature flags stuck on for 6+ months.",
+  "unreachable_code": [
+    { "file": "src/services/order_service.py", "line_start": 120, "line_end": 135, "type": "post_return", "confidence": "high", "description": "Code after unconditional return on line 119" }
+  ],
+  "unused_exports": [
+    { "file": "src/utils/helpers.py", "name": "format_legacy_date", "type": "function", "line": 45, "confidence": "high" },
+    { "file": "src/models/base.py", "name": "DeprecatedMixin", "type": "class", "line": 80, "confidence": "high" }
+  ],
+  "orphaned_files": [
+    { "path": "src/old_feature/handler.py", "last_modified": "2024-06-15", "size_bytes": 2048, "likely_reason": "removed_feature" },
+    { "path": "src/old_feature/models.py", "last_modified": "2024-06-15", "size_bytes": 1024, "likely_reason": "removed_feature" }
+  ],
+  "stale_feature_flags": [
+    { "name": "ENABLE_NEW_CHECKOUT", "location": "src/config/flags.py:12", "always_value": "true", "age_days": 210 }
+  ],
+  "unused_config": [
+    { "key": "LEGACY_WEBHOOK_URL", "defined_in": "config/settings.py", "confidence": "high" }
+  ],
+  "zombie_dependencies": [
+    { "name": "xmltodict", "declared_in": "requirements.txt", "type": "production", "confidence": "high" }
+  ],
+  "commented_code_blocks": [
+    { "file": "src/api/auth.py", "line_start": 55, "line_end": 78, "line_count": 23, "age_days": 300 }
+  ],
+  "dead_routes": [],
+  "dead_code_summary": {
+    "total_dead_lines": 185,
+    "total_source_lines": 4400,
+    "dead_ratio": 0.042,
+    "total_orphaned_files": 8,
+    "total_zombie_deps": 3
+  },
+  "risk_distribution": { "critical": 0, "high": 2, "medium": 6, "low": 8 },
+  "recommendations": [
+    { "priority": 1, "title": "Remove src/old_feature/ directory", "description": "8 orphaned files from a removed feature -- safe to delete entirely", "effort": "low" },
+    { "priority": 2, "title": "Clean up ENABLE_NEW_CHECKOUT flag", "description": "Feature flag stuck on true for 7 months -- remove the flag and dead branches", "effort": "low" }
+  ]
+}

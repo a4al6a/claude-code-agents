@@ -1,0 +1,42 @@
+{
+  "overall_score": 52,
+  "summary": "Bus factor of 1 on 3 critical modules. Top contributor owns 62% of the codebase. 15 files untouched for over a year.",
+  "bus_factor": {
+    "overall": 2,
+    "per_module": [
+      { "module": "src/payments/", "bus_factor": 1, "top_contributor": "alice@example.com", "top_contributor_pct": 95.0, "risk": "critical" },
+      { "module": "src/auth/", "bus_factor": 1, "top_contributor": "bob@example.com", "top_contributor_pct": 88.0, "risk": "critical" },
+      { "module": "src/api/", "bus_factor": 3, "top_contributor": "alice@example.com", "top_contributor_pct": 45.0, "risk": "low" }
+    ]
+  },
+  "hotspots": [
+    { "file": "src/core/engine.py", "commit_count": 85, "complexity_rank": 1, "last_30_day_commits": 12, "risk_score": "critical", "top_contributors": ["alice@example.com"] },
+    { "file": "src/api/routes.py", "commit_count": 62, "complexity_rank": 5, "last_30_day_commits": 8, "risk_score": "high", "top_contributors": ["alice@example.com", "bob@example.com"] }
+  ],
+  "knowledge_concentration": {
+    "top_1_contributor_pct": 62.0,
+    "top_3_contributors_pct": 89.0,
+    "gini_coefficient": 0.71,
+    "total_contributors": 6,
+    "active_contributors_last_90_days": 3
+  },
+  "orphan_code": [
+    { "file": "src/legacy/importer.py", "last_touch_date": "2024-01-20", "last_contributor": "charlie@example.com", "days_since_touch": 412, "line_count": 320 }
+  ],
+  "team_coupling": [
+    { "file": "src/shared/utils.py", "contributors_count": 5, "coupling_score": "high", "recent_conflicts": 4 }
+  ],
+  "churn_velocity": {
+    "high_churn": [
+      { "file": "src/core/engine.py", "commits_last_90_days": 28, "trend": "increasing" }
+    ],
+    "stale": [
+      { "file": "src/legacy/importer.py", "last_commit_days_ago": 412, "classification": "potentially_abandoned" }
+    ]
+  },
+  "risk_distribution": { "critical": 3, "high": 4, "medium": 5, "low": 3 },
+  "recommendations": [
+    { "priority": 1, "title": "Cross-train on payment processing module", "description": "Bus factor of 1 -- only alice@ has ever touched this critical module", "effort": "high" },
+    { "priority": 2, "title": "Pair program on auth module", "description": "bob@ is the sole knowledge holder for authentication", "effort": "medium" }
+  ]
+}

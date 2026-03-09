@@ -1,0 +1,47 @@
+{
+  "overall_score": 71,
+  "summary": "API is mostly consistent but uses 3 different error response formats. No versioning strategy. Pagination inconsistent across list endpoints.",
+  "endpoint_inventory": [
+    { "method": "GET", "path": "/api/users", "handler": "UserController.list", "file": "src/api/users.py", "versioned": false, "documented": true },
+    { "method": "GET", "path": "/api/users/:id", "handler": "UserController.get", "file": "src/api/users.py", "versioned": false, "documented": true },
+    { "method": "POST", "path": "/api/users", "handler": "UserController.create", "file": "src/api/users.py", "versioned": false, "documented": true },
+    { "method": "GET", "path": "/api/orders", "handler": "OrderController.list", "file": "src/api/orders.py", "versioned": false, "documented": false }
+  ],
+  "naming_consistency": {
+    "score": 85,
+    "dominant_convention": "kebab-case",
+    "violations": [
+      { "endpoint": "/api/getUserById", "issue": "RPC-style naming in REST API", "suggestion": "GET /api/users/:id" }
+    ]
+  },
+  "http_method_correctness": { "score": 95, "violations": [] },
+  "status_code_consistency": { "score": 80, "violations": ["POST /api/users returns 200 instead of 201"] },
+  "error_format_uniformity": {
+    "score": 50,
+    "formats_found": [
+      "{ \"error\": \"message\" }",
+      "{ \"detail\": \"message\" }",
+      "{ \"errors\": [{ \"code\": \"\", \"message\": \"\" }] }"
+    ],
+    "inconsistencies": ["3 different error response shapes across 15 endpoints"]
+  },
+  "versioning_assessment": { "strategy": "none", "coverage": 0.0, "gaps": ["No API versioning strategy detected"] },
+  "pagination_consistency": {
+    "score": 60,
+    "strategy": "mixed",
+    "list_endpoints_total": 5,
+    "list_endpoints_paginated": 3,
+    "inconsistencies": ["GET /api/users uses offset, GET /api/orders uses cursor"]
+  },
+  "breaking_change_risks": [],
+  "documentation_alignment": {
+    "spec_exists": false,
+    "undocumented_endpoints": ["/api/orders"],
+    "stale_documented_endpoints": []
+  },
+  "risk_distribution": { "critical": 0, "high": 2, "medium": 5, "low": 3 },
+  "recommendations": [
+    { "priority": 1, "title": "Standardize error response format", "description": "Adopt a single error response shape across all endpoints", "effort": "medium" },
+    { "priority": 2, "title": "Add API versioning", "description": "Introduce URL versioning (/api/v1/) before the API surface grows", "effort": "medium" }
+  ]
+}

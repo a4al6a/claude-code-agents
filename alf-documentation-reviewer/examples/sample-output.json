@@ -1,0 +1,54 @@
+{
+  "overall_score": 45,
+  "summary": "Documentation covers only 35% of public APIs. The 3 most complex modules have no documentation. README setup instructions reference a deleted Makefile.",
+  "doc_coverage": {
+    "documented_public_apis": 28,
+    "total_public_apis": 80,
+    "coverage_ratio": 0.35,
+    "worst_undocumented": [
+      { "file": "src/core/engine.py", "name": "Engine", "type": "class", "complexity": "high" },
+      { "file": "src/core/scheduler.py", "name": "schedule_task", "type": "function", "complexity": "high" }
+    ]
+  },
+  "complexity_doc_gap": [
+    { "file": "src/core/engine.py", "complexity_rank": 1, "documentation_level": "none", "gap_severity": "critical" },
+    { "file": "src/core/scheduler.py", "complexity_rank": 2, "documentation_level": "minimal", "gap_severity": "high" }
+  ],
+  "stale_comments": [
+    { "file": "src/api/auth.py", "line": 15, "comment_snippet": "# TODO: switch to OAuth2 before launch", "issue": "outdated_todo", "age_days": 540 }
+  ],
+  "readme_assessment": {
+    "exists": true,
+    "sections": ["purpose", "setup"],
+    "missing_sections": ["usage", "contributing"],
+    "freshness_days": 180,
+    "setup_completeness": "partial",
+    "referenced_files_exist": false
+  },
+  "adr_assessment": {
+    "exists": false,
+    "directory": null,
+    "count": 0,
+    "latest_date": null,
+    "coverage": "none"
+  },
+  "changelog_assessment": {
+    "exists": false,
+    "format": "none",
+    "last_entry_date": null,
+    "entries_count": 0,
+    "consistent": false
+  },
+  "onboarding_assessment": {
+    "clone_to_running_minutes": 45,
+    "dev_deps_documented": false,
+    "test_docs": false,
+    "env_vars_documented": false,
+    "score": 25
+  },
+  "risk_distribution": { "critical": 2, "high": 4, "medium": 6, "low": 3 },
+  "recommendations": [
+    { "priority": 1, "title": "Document the core engine module", "description": "Highest complexity, zero documentation -- add class and method docstrings", "effort": "medium" },
+    { "priority": 2, "title": "Fix README setup instructions", "description": "References a deleted Makefile. Update with current build process", "effort": "low" }
+  ]
+}

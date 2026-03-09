@@ -1,0 +1,68 @@
+{
+  "overall_score": 65,
+  "summary": "GitHub Actions CI with good test coverage but no security scanning. Docker setup present but uses root user. No IaC detected.",
+  "ci_pipeline": {
+    "provider": "github_actions",
+    "pipelines_count": 2,
+    "stages": ["build", "test", "lint"],
+    "has_caching": true,
+    "has_parallelism": false,
+    "has_failure_notifications": false,
+    "conditional_execution": true,
+    "estimated_quality": "adequate"
+  },
+  "build_reproducibility": {
+    "lock_files_present": true,
+    "lock_files_fresh": true,
+    "pinned_tool_versions": false,
+    "build_matrix": false,
+    "score": 60
+  },
+  "environment_parity": {
+    "config_strategy": "env_vars",
+    "dev_prod_drift_signals": ["docker-compose.yml for dev, no k8s manifests for prod"],
+    "score": 50
+  },
+  "secret_management": {
+    "method": "env_vars",
+    "rotation_signals": false,
+    "hardcoded_risks": ["docker-compose.yml contains default DB password"],
+    "score": 45
+  },
+  "deployment": {
+    "strategy": "unknown",
+    "rollback_capable": false,
+    "zero_downtime": false,
+    "health_checks": false,
+    "score": 30
+  },
+  "containerization": {
+    "uses_docker": true,
+    "multi_stage_builds": false,
+    "non_root_user": false,
+    "dockerignore_present": true,
+    "base_image_quality": "official",
+    "layer_efficiency": "poor",
+    "secrets_in_layers": false,
+    "score": 50
+  },
+  "iac": {
+    "tool": "none",
+    "coverage": "none",
+    "remote_state": false,
+    "drift_detection": false,
+    "score": 0
+  },
+  "branch_protection": {
+    "protected_branches": true,
+    "required_reviews": true,
+    "required_ci_checks": true,
+    "signed_commits": false,
+    "score": 75
+  },
+  "risk_distribution": { "critical": 1, "high": 3, "medium": 4, "low": 2 },
+  "recommendations": [
+    { "priority": 1, "title": "Add non-root user to Dockerfile", "description": "Running as root in container is a security risk", "effort": "low" },
+    { "priority": 2, "title": "Add security scanning to CI", "description": "No SAST, dependency scanning, or container scanning in pipeline", "effort": "medium" }
+  ]
+}

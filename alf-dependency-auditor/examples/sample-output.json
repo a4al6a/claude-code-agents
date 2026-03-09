@@ -1,0 +1,38 @@
+{
+  "overall_score": 68,
+  "summary": "42 direct dependencies, 3 critically outdated, 1 abandoned package (last publish 2022). 2 GPL-licensed deps in MIT project.",
+  "dependency_counts": {
+    "direct": 42,
+    "dev_only": 15,
+    "transitive": 187,
+    "total": 229,
+    "max_tree_depth": 7
+  },
+  "outdated": [
+    { "name": "lodash", "current": "4.17.15", "latest": "4.17.21", "drift_severity": "patch", "age_days": 900, "breaking_change_risk": "low" },
+    { "name": "express", "current": "4.18.1", "latest": "5.0.1", "drift_severity": "major", "age_days": 600, "breaking_change_risk": "high" }
+  ],
+  "abandoned": [
+    { "name": "left-pad", "last_publish": "2022-01-15", "last_commit": "2021-06-01", "indicators": ["no_recent_commits", "archived"], "risk": "medium" }
+  ],
+  "license_issues": [
+    { "name": "some-gpl-lib", "license": "GPL-3.0", "conflict_reason": "Copyleft license in MIT-licensed project", "severity": "high" }
+  ],
+  "duplicates": [
+    { "function": "HTTP client", "libraries": ["axios", "node-fetch", "got"], "recommendation": "Consolidate to a single HTTP library" }
+  ],
+  "phantom_dependencies": [],
+  "pinning_strategy": {
+    "exact_count": 10,
+    "range_count": 30,
+    "unpinned_count": 2,
+    "lock_file_present": true,
+    "lock_file_fresh": true
+  },
+  "supply_chain_risks": [],
+  "risk_distribution": { "critical": 1, "high": 3, "medium": 5, "low": 8 },
+  "recommendations": [
+    { "priority": 1, "title": "Replace GPL-licensed dependency", "description": "some-gpl-lib is GPL-3.0 which is incompatible with your MIT license", "effort": "medium" },
+    { "priority": 2, "title": "Update express to v5", "description": "Major version behind with security implications", "effort": "high" }
+  ]
+}

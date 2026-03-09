@@ -1,0 +1,80 @@
+{
+  "overall_score": 62,
+  "summary": "Moderate security posture. 2 high-severity injection risks and 3 hardcoded secrets detected. Input validation covers 68% of entry points.",
+  "owasp_findings": [
+    {
+      "category": "A03:2021-Injection",
+      "severity": "high",
+      "file": "src/api/search.py",
+      "line": 45,
+      "description": "SQL query built with string concatenation using user input",
+      "evidence": "query = f\"SELECT * FROM users WHERE name = '{request.args.get('name')}'\"",
+      "remediation": "Use parameterized queries: cursor.execute('SELECT * FROM users WHERE name = %s', (name,))"
+    },
+    {
+      "category": "A07:2021-XSS",
+      "severity": "medium",
+      "file": "src/templates/profile.html",
+      "line": 23,
+      "description": "User input rendered without escaping in template",
+      "evidence": "{{ user.bio | safe }}",
+      "remediation": "Remove the | safe filter or sanitize the bio field before storage"
+    }
+  ],
+  "secrets_detected": [
+    {
+      "type": "api_key",
+      "file": "src/config/settings.py",
+      "line": 12,
+      "confidence": "high",
+      "pattern": "STRIPE_API_KEY = 'sk_live_...'"
+    }
+  ],
+  "input_validation": {
+    "entry_points_total": 25,
+    "entry_points_validated": 17,
+    "coverage_ratio": 0.68,
+    "unvalidated_entries": [
+      {
+        "file": "src/api/upload.py",
+        "line": 30,
+        "input_type": "file_upload",
+        "description": "File type not validated before processing"
+      }
+    ]
+  },
+  "auth_assessment": {
+    "consistency_score": 75,
+    "missing_auth_endpoints": ["/api/admin/export"],
+    "patterns_found": ["jwt_bearer", "session_cookie"],
+    "issues": ["Admin export endpoint has no authentication middleware"]
+  },
+  "dependency_cves": {
+    "critical": 0,
+    "high": 1,
+    "medium": 3,
+    "low": 2,
+    "details": []
+  },
+  "crypto_issues": [],
+  "risk_distribution": {
+    "critical": 0,
+    "high": 2,
+    "medium": 4,
+    "low": 3
+  },
+  "recommendations": [
+    {
+      "priority": 1,
+      "title": "Fix SQL injection in search endpoint",
+      "description": "Replace string concatenation with parameterized queries in src/api/search.py",
+      "effort": "low"
+    },
+    {
+      "priority": 2,
+      "title": "Remove hardcoded API keys from source",
+      "description": "Move STRIPE_API_KEY to environment variables or secret manager",
+      "effort": "low"
+    }
+  ]
+}

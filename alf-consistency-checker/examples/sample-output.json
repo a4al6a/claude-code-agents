@@ -1,0 +1,67 @@
+{
+  "overall_score": 67,
+  "summary": "Naming is 85% consistent (snake_case dominant). Logging uses 3 different patterns. Repository pattern partially adopted (5 of 8 data access modules).",
+  "naming_conventions": {
+    "score": 85,
+    "dominant_function_style": "snake_case",
+    "dominant_file_style": "snake_case",
+    "dominant_class_style": "PascalCase",
+    "violations": [
+      { "file": "src/api/userController.py", "name": "getUserById", "expected_convention": "snake_case", "actual_convention": "camelCase", "line": 12 }
+    ],
+    "violation_count": 8,
+    "total_names_checked": 240
+  },
+  "structure_consistency": {
+    "score": 70,
+    "pattern": "layered",
+    "anomalies": [
+      { "file": "src/utils/user_service.py", "issue": "Service file in utils directory", "expected_location": "src/services/" }
+    ]
+  },
+  "import_consistency": {
+    "score": 75,
+    "dominant_style": "absolute",
+    "ordering_consistent": false,
+    "violations_count": 12,
+    "wildcard_imports": 2
+  },
+  "logging_uniformity": {
+    "score": 40,
+    "structured_pct": 0.3,
+    "dominant_style": "mixed",
+    "level_consistency": false,
+    "logger_pattern": "mixed",
+    "format_variations": 3
+  },
+  "config_patterns": {
+    "score": 60,
+    "dominant_pattern": "env_vars",
+    "deviations": [
+      { "file": "src/services/email.py", "issue": "Direct os.environ access instead of config object", "line": 8 }
+    ]
+  },
+  "error_handling_consistency": {
+    "score": 55,
+    "dominant_pattern": "stdlib_exceptions",
+    "inconsistencies": ["Service layer mixes custom exceptions with raw ValueError/TypeError"]
+  },
+  "formatting_consistency": {
+    "score": 90,
+    "indentation": "spaces_4",
+    "quote_style": "double",
+    "formatter_config_present": true,
+    "formatter": "black"
+  },
+  "pattern_adherence": {
+    "score": 65,
+    "patterns_detected": [
+      { "pattern": "repository", "adherence_pct": 62.5, "exceptions": ["UserController directly queries DB", "ReportService uses raw SQL"] }
+    ]
+  },
+  "risk_distribution": { "critical": 0, "high": 2, "medium": 6, "low": 5 },
+  "recommendations": [
+    { "priority": 1, "title": "Standardize logging approach", "description": "Adopt structured logging (structlog) across all modules -- currently 3 different patterns", "effort": "medium" },
+    { "priority": 2, "title": "Complete repository pattern adoption", "description": "Move direct DB access from UserController and ReportService to repository classes", "effort": "medium" }
+  ]
+}

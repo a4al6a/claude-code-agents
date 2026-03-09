@@ -1,0 +1,67 @@
+{
+  "overall_score": 55,
+  "summary": "Error handling is inconsistent across layers. 8 swallowed exceptions found, no resilience patterns detected. 12 I/O operations lack error handling.",
+  "exception_patterns": {
+    "catch_all_count": 6,
+    "empty_catch_count": 3,
+    "specific_catch_count": 24,
+    "swallowed_count": 8,
+    "custom_exception_types": 2
+  },
+  "swallowed_exceptions": [
+    {
+      "file": "src/services/payment_service.py",
+      "line": 67,
+      "context": "Payment gateway timeout caught and logged but not re-raised or handled",
+      "severity": "high"
+    }
+  ],
+  "missing_error_handling": [
+    {
+      "file": "src/api/webhook.py",
+      "line": 23,
+      "operation": "network",
+      "description": "External webhook POST with no timeout or error handling",
+      "severity": "high"
+    }
+  ],
+  "resilience_patterns": {
+    "retries": { "count": 0, "locations": [] },
+    "circuit_breakers": { "count": 0, "locations": [] },
+    "timeouts": { "count": 2, "locations": ["src/clients/api_client.py:15"] },
+    "fallbacks": { "count": 0, "locations": [] }
+  },
+  "error_propagation": {
+    "consistency_score": 45,
+    "layer_analysis": [
+      { "layer": "api", "pattern": "catches and returns HTTP error", "consistent": true },
+      { "layer": "service", "pattern": "mixed - sometimes re-raises, sometimes swallows", "consistent": false }
+    ],
+    "cross_boundary_leaks": ["DatabaseError leaks from repository to API layer in UserController"]
+  },
+  "logging_assessment": {
+    "errors_with_context_ratio": 0.6,
+    "sensitive_data_in_logs": [],
+    "level_appropriateness_score": 70
+  },
+  "risk_distribution": {
+    "critical": 2,
+    "high": 5,
+    "medium": 8,
+    "low": 4
+  },
+  "recommendations": [
+    {
+      "priority": 1,
+      "title": "Add error handling to unprotected webhook calls",
+      "description": "Wrap external POST calls with timeout, retry, and error handling",
+      "effort": "medium"
+    },
+    {
+      "priority": 2,
+      "title": "Eliminate swallowed exceptions in payment service",
+      "description": "Re-raise or handle payment gateway errors meaningfully",
+      "effort": "low"
+    }
+  ]
+}

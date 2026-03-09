@@ -1,0 +1,26 @@
+{
+  "overall_score": 58,
+  "summary": "3 potential race conditions, 5 N+1 query patterns, 2 blocking I/O calls in async handlers. No thread safety issues (single-threaded runtime).",
+  "thread_safety_issues": [],
+  "race_conditions": [
+    { "pattern": "toctou", "file": "src/services/inventory.py", "line": 34, "risk": "high", "description": "Checks stock quantity then decrements without locking -- concurrent requests can oversell" }
+  ],
+  "async_issues": [
+    { "type": "blocking_in_async", "file": "src/api/report.py", "line": 55, "severity": "high", "description": "Synchronous file.read() inside async request handler blocks the event loop" },
+    { "type": "missing_await", "file": "src/services/notification.py", "line": 22, "severity": "medium", "description": "send_email() is async but called without await -- email silently not sent" }
+  ],
+  "n_plus_one": [
+    { "file": "src/api/users.py", "line": 18, "entity": "User.orders", "pattern": "lazy_load_in_loop", "estimated_impact": "high" }
+  ],
+  "memory_leak_risks": [
+    { "pattern": "unbounded_cache", "file": "src/utils/cache.py", "line": 5, "severity": "medium", "description": "Dict-based cache with no eviction policy or size limit" }
+  ],
+  "resource_leaks": [
+    { "resource_type": "db_connection", "file": "src/db/queries.py", "line": 40, "severity": "high", "description": "Connection acquired in try block but not released in except/finally path" }
+  ],
+  "risk_distribution": { "critical": 1, "high": 4, "medium": 5, "low": 2 },
+  "recommendations": [
+    { "priority": 1, "title": "Fix race condition in inventory service", "description": "Use SELECT FOR UPDATE or optimistic locking for stock management", "effort": "medium" },
+    { "priority": 2, "title": "Add eager loading for User.orders", "description": "Use prefetch_related('orders') to eliminate N+1 query", "effort": "low" }
+  ]
+}

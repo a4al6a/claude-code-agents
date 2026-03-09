@@ -1,0 +1,45 @@
+{
+  "overall_score": 56,
+  "summary": "2 SQL injection risks in raw queries. 4 N+1 patterns detected. Missing transactions on 3 multi-step writes. Migrations are well-structured.",
+  "orm_detected": "sqlalchemy",
+  "database_type": "postgresql",
+  "migration_health": {
+    "total_migrations": 23,
+    "reversible_count": 21,
+    "naming_consistent": true,
+    "gap_free": true,
+    "destructive_without_safeguard": ["Migration 0018 drops column without data backup"],
+    "score": 80
+  },
+  "orm_issues": [
+    { "type": "lazy_load_in_loop", "file": "src/api/users.py", "line": 34, "entity": "User.orders", "severity": "high", "description": "Accessing user.orders inside a for loop triggers N+1 queries" },
+    { "type": "over_fetch", "file": "src/services/report.py", "line": 22, "entity": "Order", "severity": "medium", "description": "Selecting all 25 columns when only 3 are needed" }
+  ],
+  "raw_sql_risks": [
+    { "file": "src/reports/custom_query.py", "line": 15, "query_snippet": "f\"SELECT * FROM orders WHERE status = '{status}'\"", "injection_risk": "critical", "parameterized": false }
+  ],
+  "transaction_issues": [
+    { "type": "missing_transaction", "file": "src/services/order_service.py", "line": 45, "description": "Creates order + updates inventory + sends notification without transaction wrapper", "severity": "critical" }
+  ],
+  "index_analysis": {
+    "missing_indexes": [
+      { "table": "orders", "columns": ["user_id", "created_at"], "query_location": "src/api/orders.py:28", "impact": "high" }
+    ],
+    "unused_indexes": [],
+    "over_indexed_tables": []
+  },
+  "n_plus_one": [
+    { "file": "src/api/users.py", "line": 34, "entity": "User.orders", "loop_type": "for_loop", "fix_suggestion": "Use joinedload(User.orders) in the query" }
+  ],
+  "connection_management": {
+    "pool_configured": true,
+    "pool_settings": { "pool_size": 5, "max_overflow": 10 },
+    "leak_risks": [],
+    "score": 80
+  },
+  "risk_distribution": { "critical": 2, "high": 3, "medium": 4, "low": 2 },
+  "recommendations": [
+    { "priority": 1, "title": "Fix SQL injection in custom_query.py", "description": "Replace f-string interpolation with parameterized query using bindparams", "effort": "low" },
+    { "priority": 2, "title": "Wrap order creation in transaction", "description": "Order + inventory + notification should be atomic", "effort": "medium" }
+  ]
+}

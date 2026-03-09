@@ -117,6 +117,64 @@ docs/walkthrough/
   {project-name}-decisions.md          -- Recovered/inferred design decisions (ADR format)
 ```
 
+## JSON Data Output
+
+In addition to the Marp slide decks and analysis JSON, write a structured JSON data file for the codebase analyzer pipeline:
+
+```json
+{
+  "overall_score": 0-100,
+  "summary": "Brief system comprehensibility summary",
+  "documentation_coverage": {
+    "readme_present": true,
+    "adrs_count": 0,
+    "inline_doc_ratio": 0.0,
+    "api_doc_present": false
+  },
+  "architecture_clarity": {
+    "layers_detected": 0,
+    "circular_dependencies": 0,
+    "entry_points_identified": 0,
+    "naming_consistency_score": 0-100
+  },
+  "hotspot_count": 0,
+  "top_hotspots": [
+    {
+      "file": "path/to/file",
+      "complexity_score": 0.0,
+      "change_frequency": 0
+    }
+  ],
+  "risk_distribution": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "recommendations": [
+    {
+      "priority": 1,
+      "title": "Improve system comprehensibility",
+      "description": "Detailed recommendation",
+      "effort": "low|medium|high"
+    }
+  ]
+}
+```
+
+### Score Calculation
+
+`overall_score` = weighted composite of:
+- Documentation coverage (30%): README, ADRs, inline docs, API docs
+- Architecture clarity (40%): layer separation, no circular deps, clear entry points, consistent naming
+- Hotspot severity (30%): inverse of complexity × change frequency concentration
+
+Minimum score: 0, maximum: 100.
+
+The existing Marp slide decks and analysis JSON are preserved unchanged. This JSON file is an additional output for the codebase analyzer pipeline.
+
+---
+
 ## Critical Rules
 
 1. **Cross-reference everything**: every architectural claim in the walkthrough must trace to analysis data (dependency graph, metric, or git history). No unsupported assertions.
