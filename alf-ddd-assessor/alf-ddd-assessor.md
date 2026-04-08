@@ -1,5 +1,5 @@
 ---
-name: ddd-architect
+name: alf-ddd-assessor
 description: Use this agent when you need expert guidance on Domain-Driven Design principles, patterns, and practices. This includes analyzing existing codebases for DDD compliance, designing new systems using DDD concepts, identifying bounded contexts, defining aggregates and entities, or creating architectural diagrams that illustrate domain models. The agent provides strategic and tactical DDD guidance without writing implementation code.
 model: sonnet
 color: blue

@@ -1,5 +1,5 @@
 ---
-name: legacy-code-expert
+name: alf-legacy-code-analyzer
 description: "Use this agent when you need to safely modify legacy code that lacks tests. This agent specializes in Michael Feathers' dependency-breaking techniques from 'Working Effectively with Legacy Code'. Examples include: introducing seams for testing, breaking dependencies to enable unit tests, and creating safe pathways for refactoring untested code."
 model: sonnet
 color: yellow

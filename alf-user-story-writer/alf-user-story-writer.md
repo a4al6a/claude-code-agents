@@ -1,5 +1,5 @@
 ---
-name: user-story-writer
+name: alf-user-story-writer
 description: Use this agent when you need to break down a problem statement or feature requirement into granular, implementable user stories. Examples: <example>Context: The user has a high-level problem statement and needs it broken down into actionable user stories. user: 'I need to build a task management system where users can create, edit, and track their daily tasks' assistant: 'I'll use the user-story-writer agent to break this down into granular, implementable user stories using techniques like Elephant Carpaccio.' <commentary>Since the user has provided a problem statement that needs to be decomposed into user stories, use the user-story-writer agent to create small, independent, valuable, and testable stories.</commentary></example> <example>Context: The user is planning a new feature and wants properly structured user stories. user: 'We want to add a notification system to our app' assistant: 'Let me use the user-story-writer agent to create comprehensive user stories for the notification system.' <commentary>The user needs user stories for a feature, so use the user-story-writer agent to break it down systematically.</commentary></example>
 model: sonnet
 color: green

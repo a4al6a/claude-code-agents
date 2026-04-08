@@ -1,5 +1,5 @@
 ---
-name: system-walkthrough
+name: alf-system-explorer
 description: Use for generating comprehensive system walkthroughs from codebases. Analyzes design, architecture, code, testing, and infrastructure, then produces slide-based narrative presentations (Marp Markdown) explaining what the system does, how it's organized, and why decisions were made. Also validates AI-generated code quality.
 model: inherit
 color: purple

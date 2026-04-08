@@ -1,5 +1,5 @@
 ---
-name: clean-coder
+name: alf-clean-coder
 description: Use this agent when you need to refactor code to improve readability, maintainability, and structure while following clean code principles. This agent applies SOLID, GRASP, and other design principles to transform working code into clean, well-structured code. Examples: <example>Context: The user has working code that needs to be cleaned up and refactored.\nuser: "I have this function that works but it's messy and hard to read. Can you clean it up?"\nassistant: "I'll use the clean-coder agent to refactor this code following clean code principles."\n<commentary>The user wants code improvement without changing behavior, so use the clean-coder agent to apply clean code principles.</commentary></example> <example>Context: The atdd-developer agent is in the REFACTOR phase and needs to improve code quality.\nuser: "The tests are passing, now refactor the code."\nassistant: "I'll delegate to the clean-coder agent to refactor the implementation while keeping all tests green."\n<commentary>During the REFACTOR phase of TDD, delegate to clean-coder for code quality improvements.</commentary></example>
 model: sonnet
 color: green

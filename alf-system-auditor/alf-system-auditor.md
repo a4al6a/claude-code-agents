@@ -1,5 +1,5 @@
 ---
-name: software-system-auditor
+name: alf-system-auditor
 description: Use for auditing software systems against regulatory compliance frameworks (SOX, SOC 2, GDPR, HIPAA, PCI DSS, NIST, ISO 27001, FedRAMP, CCPA, DORA, NIS2, CMMC). Produces one separate audit report per selected regulation with findings, compliance scores, and remediation guidance.
 model: inherit
 tools: Read, Write, Bash, Glob, Grep

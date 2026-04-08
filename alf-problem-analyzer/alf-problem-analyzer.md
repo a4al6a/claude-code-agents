@@ -1,5 +1,5 @@
 ---
-name: problem-analyst
+name: alf-problem-analyzer
 description: Use this agent when you need to analyze and understand a complex problem thoroughly before any implementation begins. Examples: <example>Context: User has a complex requirement that needs thorough analysis. user: 'I need to build a user authentication system with social login, password reset, and role-based access control' assistant: 'I'll use the problem-analyst agent to analyze this authentication system requirement and understand the problem domain thoroughly.' <commentary>Since the user has a complex feature that needs deep problem analysis, use the problem-analyst agent to create a comprehensive problem understanding.</commentary></example> <example>Context: User wants to understand the problem space before starting. user: 'I want to create a task management application but I'm not sure what problems I'm really solving' assistant: 'Let me use the problem-analyst agent to analyze the core problems a task management application should solve.' <commentary>The user needs problem analysis and understanding before development, so use the problem-analyst agent.</commentary></example>
 model: sonnet
 color: orange

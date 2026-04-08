@@ -1,5 +1,5 @@
 ---
-name: cognitive-load-analyzer
+name: alf-cognitive-load-analyzer
 description: Use for calculating a Cognitive Load Index (CLI) score (0-1000) for a codebase. Measures 8 dimensions of cognitive load using static analysis and LLM-based naming assessment, producing a scored report with per-dimension breakdown and improvement recommendations.
 model: inherit
 tools: Read, Bash, Glob, Grep

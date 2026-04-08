@@ -1,5 +1,5 @@
 ---
-name: test-design-reviewer
+name: alf-test-design-reviewer
 description: Use for evaluating test code quality using Dave Farley's 8 Properties of Good Tests. Produces a Farley Index score (0-10) with per-property breakdown, signal evidence, worst offenders, and improvement recommendations.
 model: inherit
 tools: Read, Bash, Glob, Grep

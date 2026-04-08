@@ -1,5 +1,5 @@
 ---
-name: accessibility-assessor
+name: alf-accessibility-assessor
 description: Use for evaluating software system accessibility compliance against WCAG 2.1/2.2, ADA, Section 508, EN 301 549, and other international standards. Analyzes codebases (HTML, CSS, JS, React, Angular, Vue) for accessibility issues and produces structured assessment reports with severity classification, WCAG criteria mapping, disability impact, and remediation guidance.
 model: inherit
 tools: Read, Write, Bash, Glob, Grep

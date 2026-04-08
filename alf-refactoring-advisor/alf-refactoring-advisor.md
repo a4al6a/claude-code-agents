@@ -1,5 +1,5 @@
 ---
-name: refactoring-expert
+name: alf-refactoring-advisor
 description: Use this agent when you need to analyze code smells and generate comprehensive refactoring recommendations. Examples: <example>Context: After running code-smell-detector agent which generated a code-smell-detector-report.md file. user: 'I've identified several code smells in my codebase and need refactoring recommendations' assistant: 'I'll use the refactoring-expert agent to analyze the code smell report and generate detailed refactoring recommendations' <commentary>Since the user needs refactoring analysis based on detected code smells, use the refactoring-expert agent to process the code-smell-detector-report.md and generate comprehensive refactoring guidance.</commentary></example> <example>Context: User has a code-smell-detector-report.md file and wants actionable refactoring steps. user: 'Can you help me understand what refactoring techniques I should apply to fix the issues found in my code analysis?' assistant: 'I'll launch the refactoring-expert agent to analyze your code smell report and provide specific refactoring recommendations' <commentary>The user needs expert guidance on refactoring techniques, so use the refactoring-expert agent to generate detailed recommendations.</commentary></example>
 model: sonnet
 color: blue
