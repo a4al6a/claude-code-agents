@@ -55,6 +55,7 @@ AGENT_DEFS=(
     "alf-consistency-checker:alf-consistency-checker.md:"
     "alf-data-layer-reviewer:alf-data-layer-reviewer.md:"
     "alf-observability-assessor:alf-observability-assessor.md:"
+    "sherlock:sherlock.md:"
 )
 
 # Skill definitions: "agent-folder:skill-folder-name"
