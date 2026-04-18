@@ -1,0 +1,28 @@
+# .gitlab-ci.yml fragment for sherlock.
+# Runs only on merge request events, gates the pipeline on the JSON verdict,
+# and posts inline discussions.
+sherlock:
+  stage: test
+  image: node:20
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    PR_PLATFORM: gitlab
+    # Set to "1" during rollout to disable the hard gate.
+    ADVISORY: "0"
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends jq git curl
+    - npm i -g @anthropic-ai/claude-code
+    - mkdir -p ~/.claude/agents
+    - cp sherlock/sherlock.md ~/.claude/agents/
+    - export BASE_SHA="$CI_MERGE_REQUEST_DIFF_BASE_SHA"
+    - export HEAD_SHA="$CI_COMMIT_SHA"
+  script:
+    - bash sherlock/examples/run-review.sh
+  artifacts:
+    when: always
+    paths:
+      - code-review-verdict.json
+    expire_in: 1 week
+  # ANTHROPIC_API_KEY and GITLAB_TOKEN must be set as masked CI/CD variables.
+  # GITLAB_TOKEN needs "api" scope so it can post MR discussions.

@@ -1,0 +1,54 @@
+# .sherlock.yml — place at repo root. All keys optional; defaults shown.
+# Full reference: sherlock/README.md
+
+# Fail the pipeline if major findings exceed this count. Blockers always fail.
+major_threshold: 3
+
+# Paths that require an explicit override label to pass.
+protected_paths: []
+# - "infra/**"
+# - "src/auth/**"
+# - "migrations/**"
+
+# Label on the PR/MR that clears the protected_paths gate.
+override_label: sherlock-approved
+
+# Categories the agent will not raise findings in.
+# Valid: correctness, security, performance, concurrency, testing, design, readability, docs.
+mute_categories: []
+
+# Paths skipped entirely (generated code, vendored deps, etc.).
+mute_paths: []
+# - "src/generated/**"
+# - "vendor/**"
+
+# Review-spam guard: cap on findings posted as comments.
+max_findings: 50
+
+# Lines of surrounding context the agent reads around each diff hunk.
+context_lines: 30
+
+# Per-language tuning. Unknown languages use defaults.
+language_hints: {}
+# language_hints:
+#   typescript:
+#     max_cyclomatic: 12
+#     max_function_lines: 80
+#     disallow_any: true
+#   python:
+#     max_cyclomatic: 10
+#     max_function_lines: 60
+#   go:
+#     max_cyclomatic: 15
+#     require_error_wrap: true
+
+# Per-rule overrides. Rule IDs are stable (CR-SEC-001, CR-PERF-004, ...).
+rules: {}
+# rules:
+#   CR-READ-012:
+#     enabled: false
+#   CR-SEC-001:
+#     severity: blocker
+#   CR-TEST-007:
+#     paths:
+#       - "src/api/**"

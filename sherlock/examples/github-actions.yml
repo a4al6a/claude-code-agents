@@ -1,0 +1,44 @@
+name: sherlock
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write  # required to post review comments
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need full history to diff base..head
+
+      - name: Install claude CLI
+        run: npm i -g @anthropic-ai/claude-code
+
+      - name: Install sherlock agent
+        run: |
+          mkdir -p ~/.claude/agents
+          cp sherlock/sherlock.md ~/.claude/agents/
+
+      - name: Run review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_PLATFORM: github
+          # Flip to "1" for advisory rollout (comments only, never fail CI).
+          ADVISORY: "0"
+        run: bash sherlock/examples/run-review.sh
+
+      - name: Upload verdict artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-review-verdict
+          path: code-review-verdict.json
