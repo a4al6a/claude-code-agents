@@ -2,6 +2,15 @@
 
 A collection of specialized agents for software development workflows, designed to work together in pipelines for comprehensive problem-solving and code quality improvement. All agents use the `alf-` namespace prefix.
 
+## What's new (April 2026 refactor)
+
+- **alf-system-auditor** refactored to a thin generic engine that produces a shared **evidence bundle** once, then maps facts to each selected framework via per-framework skills (`framework-sox.md`, `framework-gdpr.md`, etc.). Adding a new framework is now a skill addition, not an agent change.
+- **Applicability questionnaires** in `alf-system-auditor` and `alf-accessibility-assessor` — users answer data-type and geography questions, and the agent recommends which frameworks/standards actually apply before the audit runs.
+- **Shared design-principles skill** (`_shared-skills/design-principles/`) — one canonical reference for SOLID, GRASP, DRY, KISS, YAGNI, Law of Demeter, etc. Consumed by `alf-clean-coder`, `alf-code-smell-detector`, `alf-refactoring-advisor`, `alf-ddd-assessor`.
+- **Deepening pass across all 26 agents** — tool integration (semgrep, osv-scanner, mutation testing, OpenTelemetry semantic conventions), temporal coupling analysis, migration-safety audits, language-specific deep dives (Go goroutine leaks, JVM virtual-threads, Python asyncio patterns), SLSA levels, DORA metric readiness, and more.
+
+See individual agent files for their full scope.
+
 ## Agents Overview
 
 ### Problem Analysis & Planning Agents
@@ -236,6 +245,16 @@ mkdir -p ~/.claude/skills
 cp -r alf-cognitive-load-analyzer/skills/alf-cognitive-load-analyzer ~/.claude/skills/
 cp -r alf-system-explorer/skills/alf-system-explorer ~/.claude/skills/
 cp -r alf-accessibility-assessor/skills/alf-accessibility-assessor ~/.claude/skills/
+cp -r alf-system-auditor/skills/software-system-auditor ~/.claude/skills/
+cp -r alf-test-design-reviewer/skills/alf-test-design-reviewer ~/.claude/skills/
 ```
+
+Shared skills (referenced by multiple agents — install once, reused by all) must be installed separately:
+
+```bash
+cp -r _shared-skills/design-principles ~/.claude/skills/
+```
+
+The shared `design-principles` skill is the canonical reference for SOLID / GRASP / DRY / KISS / YAGNI / Law of Demeter and is consumed by `alf-clean-coder`, `alf-code-smell-detector`, `alf-refactoring-advisor`, and `alf-ddd-assessor`. `install.sh` handles this automatically.
 
 After installation, restart Claude Code or start a new session to use the agents.

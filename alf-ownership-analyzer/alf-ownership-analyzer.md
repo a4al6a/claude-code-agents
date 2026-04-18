@@ -1,6 +1,7 @@
 ---
 name: alf-ownership-analyzer
 description: Use for analyzing code ownership, knowledge distribution, bus factor, and collaboration health using git history.
+model: haiku
 ---
 
 # ALF Ownership Analyzer
@@ -166,6 +167,75 @@ Calculate ownership inequality:
   ]
 }
 ```
+
+---
+
+## 5. Socio-technical metrics beyond bus factor
+
+Extend analysis:
+
+### Review-load distribution
+- Who reviews whom? (`gh pr list --json reviews`)
+- Gini coefficient on review workload — concentrated review burden is bus-factor-like risk
+- Average review turnaround per reviewer
+- "Review islands" — contributors reviewing only within their own area
+
+### After-hours and weekend commit analysis
+- % commits made outside business hours (timezone-inferred)
+- Per-contributor distribution — burnout risk
+- Respect local holidays when confident
+
+### Recency-weighted ownership
+- 12-month-ago ownership is less predictive than 3-month
+- Apply exponential recency weighting
+- Report both all-time and recency-weighted
+
+### Onboarding health
+- Time from first commit to tenth commit (ramp speed)
+- New-contributor rate month-over-month
+- Newcomer PR merge rate
+- Reviewer-to-newcomer pairing consistency (mentorship signal)
+
+### Incident-response participation
+- If incident records available (issue labels), who participates?
+- Narrow incident-response pool is concentrated-risk parallel to bus factor
+
+## 6. Complexity-aware hotspots
+
+Upgrade from LOC-as-proxy to AST-based complexity. Delegate to `alf-cognitive-load-analyzer` for per-file CLI scores; then:
+```
+hotspot_score = normalize(churn_rank) × normalize(cli_score_rank)
+```
+Avoids the "big generated file at top of every hotspot list" problem.
+
+## 7. Contributor-pattern taxonomy
+
+Cluster contributors by behavior:
+
+| Pattern | Signal |
+|---|---|
+| Maintainer | High ongoing commits + reviews in area |
+| Specialist | Concentrated in one module |
+| Drive-by | One-time contributor |
+| Reviewer-only | Low commits, high reviews |
+| Orphaned | Was maintainer, 6+ months silent |
+
+## 8. Team coupling
+
+When CODEOWNERS or teams metadata available:
+- Cross-team ownership of files
+- Orphan files (no team owner)
+- Cross-team PR review rates
+- Integration hotspots (files changed by multiple teams)
+
+## 9. Successor recommendations
+
+For each bus-factor-1 file/module, suggest successors ranked by:
+- Recent activity in adjacent code
+- Review participation
+- Role/team alignment
+
+Convert top 3 into actionable "shadow the maintainer" assignments.
 
 ---
 

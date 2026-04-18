@@ -1,6 +1,7 @@
 ---
 name: alf-data-layer-reviewer
 description: Use for evaluating database access patterns, schema hygiene, and data layer correctness.
+model: sonnet
 ---
 
 # ALF Data Layer Reviewer
@@ -177,6 +178,56 @@ Specific patterns per ORM:
   ]
 }
 ```
+
+---
+
+## 5. Migration-safety audit
+
+When migration files exist (Rails, Django, Alembic, Flyway, Liquibase, Prisma, TypeORM), check danger patterns:
+
+| Pattern | Risk | Safe alternative |
+|---|---|---|
+| `ADD COLUMN NOT NULL` without default on large table | Full rewrite; blocks writes | Nullable first; backfill; add NOT NULL |
+| `ADD CONSTRAINT` without `NOT VALID` → `VALIDATE` | Long lock | Two-step on PG |
+| `CREATE INDEX` (non-CONCURRENTLY on PG) | Blocks writes | `CREATE INDEX CONCURRENTLY` |
+| Rename column | Two-phase deploy required | Parallel-change: add-dual-write-backfill-cutover-drop |
+| Drop column | Breaks older deploys | Mark `IGNORED` first, then drop |
+| Large single-transaction DDL+DML | Long lock | Split migrations |
+| Destructive without reversibility | Can't roll back | Gated reversible block |
+| Non-idempotent up-migration | Retry fails | Guards (`IF NOT EXISTS`) |
+
+PostgreSQL/MySQL differ significantly — apply engine-specific rules.
+
+## 6. NoSQL and document-DB patterns
+
+### MongoDB / document stores
+- Schema drift across documents; embedded vs referenced trade-off; compound index order; write concern / read preference
+
+### KV stores (Redis, DynamoDB)
+- Partition-key design (hot partitions); TTL on ephemeral keys; transaction patterns (MULTI/EXEC, Dynamo transactions)
+
+### Search indices (Elasticsearch, OpenSearch)
+- ILM policies; mapping drift code-vs-index; reindex strategies
+
+### Event stores (Kafka, event-sourcing)
+- Partitioning strategy; compaction; schema evolution via registry
+
+Report per-backend findings separately; do not cross-apply SQL idioms to document stores.
+
+## 7. Polyglot-persistence consistency
+
+When multiple backends coexist:
+- No hidden cross-backend dual-writes
+- Outbox pattern for cross-backend consistency
+- Idempotency on cross-system writes
+- Clear ownership per data type
+
+## 8. Connection-pool and lifecycle analysis
+
+- Pool size × worker count vs DB max_connections
+- Idle-timeout vs load-balancer-timeout mismatch
+- `pool.get()` / `pool.release()` symmetry (leak detection)
+- Context-manager vs try/finally usage
 
 ---
 

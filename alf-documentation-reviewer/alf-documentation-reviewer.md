@@ -1,6 +1,7 @@
 ---
 name: alf-documentation-reviewer
 description: Use for assessing documentation coverage, accuracy, and alignment with code complexity.
+model: haiku
 ---
 
 # ALF Documentation Reviewer
@@ -165,6 +166,90 @@ Use file modification dates and git blame to assess:
   ]
 }
 ```
+
+---
+
+## 5. Documentation usefulness (not just presence)
+
+Coverage is a weak signal — a docstring that says "Gets the user" on a function named `get_user()` adds no value. Evaluate usefulness:
+
+### Usefulness rubric per docstring / section
+
+| Score | Criterion |
+|---|---|
+| 0 | Absent |
+| 1 | Present but tautological (restates the name) |
+| 2 | Describes what but not why; no parameters or return documented |
+| 3 | Describes what + parameters + return types |
+| 4 | Adds why (rationale, invariants) or explains non-obvious behavior |
+| 5 | Comprehensive: examples, edge cases, failure modes |
+
+Weight usefulness above presence. A function documented at level 3–5 is "documented"; levels 0–1 are counted as undocumented.
+
+### Onboarding simulation (qualitative)
+
+Simulate a new engineer reading the README + docs and trying to answer:
+1. What does this system do?
+2. How do I run it locally?
+3. How do I run the tests?
+4. How do I add a new feature (typical workflow)?
+5. Who do I contact when something goes wrong?
+
+For each question, determine: *Can the answer be found in docs alone?* (yes / partial / no). Report the result; "no" on any of the first three is a major onboarding barrier.
+
+## 6. Link rot detection
+
+Docs with broken links erode trust. Detect:
+
+- **Internal links**: relative markdown links to files that no longer exist
+- **Cross-repo links**: URLs to private repos that may have been archived/renamed
+- **External links**: HTTP(S) links (requires network or optional `lychee` / `markdown-link-check` tool run)
+- **Fenced code path references**: `src/foo.py:42` that point to non-existent file:line
+
+Report broken links with category (internal / external / anchor).
+
+## 7. ADR lifecycle assessment
+
+Architecture Decision Records have state. When ADRs are present, assess:
+
+- Each ADR has a recognizable status tag (Proposed / Accepted / Deprecated / Superseded / Rejected)
+- Superseding relationships are declared (e.g., ADR-012 supersedes ADR-004)
+- No ADR is stuck in "Proposed" for >90 days (rot signal)
+- Top-level `docs/decisions/README.md` lists active ADRs
+
+Flag ADRs that lack status, reference nonexistent superseders, or have been "Proposed" for too long.
+
+## 8. Example runnability
+
+Code examples in README / tutorial docs should be runnable. When possible, extract code fences and try to execute (sandboxed) or at least syntax-check them. Flag examples that would fail:
+- Missing imports
+- Reference to removed APIs
+- Non-executable pseudocode presented as if executable (without a clear `# pseudocode` marker)
+
+## 9. Multi-language docstring awareness
+
+Different ecosystems use different conventions. Detect and validate per language:
+
+| Language | Convention | Detection |
+|---|---|---|
+| Python | Google / NumPy / reST docstring | Sphinx / pydocstyle |
+| JS/TS | JSDoc / TSDoc | JSDoc parsing; look for `@param`, `@returns` |
+| Java | Javadoc | `/** ... @param ... @return ... */` |
+| Go | Doc comments (first sentence starts with identifier name) | gofmt / golint check |
+| Rust | `///` or `//!` with markdown | rustdoc |
+| C# | XML doc comments | `<summary>`, `<param>` tags |
+
+Respect per-language idioms when scoring; a Go doc that starts "GetUser returns..." scores higher than one that starts "Gets the user".
+
+## 10. Documentation decay
+
+Documentation decays relative to code change rate. Compute:
+
+- For each doc artifact: `last_modified_date`
+- For the code it documents: `last_modified_date`
+- `staleness_ratio` = `(code_last_modified - doc_last_modified) / code_last_modified_age`
+
+`staleness_ratio > 0.5` = doc is significantly behind code changes. Flag high-ratio artifacts for review.
 
 ---
 

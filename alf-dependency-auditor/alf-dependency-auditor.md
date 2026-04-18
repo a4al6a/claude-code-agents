@@ -1,6 +1,7 @@
 ---
 name: alf-dependency-auditor
 description: Use for assessing the health, risk, and hygiene of project dependencies.
+model: haiku
 ---
 
 # ALF Dependency Auditor
@@ -167,6 +168,72 @@ For each dependency:
   ]
 }
 ```
+
+---
+
+## 5. CVE / vulnerability feed integration
+
+Real auditing requires vulnerability data — do not rely on version-number heuristics alone.
+
+Run when available:
+- `osv-scanner` (Google OSV — covers npm, PyPI, Maven, RubyGems, Go, NuGet, Packagist, Cargo, Hex, Pub, Linux distros)
+- `npm audit --json`, `pip-audit`, `cargo audit`, `bundle audit`, `dotnet list package --vulnerable`
+- `mvn org.owasp:dependency-check-maven:check`
+- `govulncheck ./...` (Go; reachability-aware)
+- `trivy fs --format json .` (polyglot + containers)
+
+Include in findings: CVE ID, CVSS, fixed-in version, EPSS score, reachability where available.
+
+## 6. License compatibility graph
+
+Don't just flag licenses individually; build compatibility transitively:
+- Identify project's license
+- For every direct + transitive dep, identify SPDX expression
+- Check each license for compatibility with project license
+- Flag chains that break compatibility (e.g., AGPL-3.0 pulled through a permissive dep)
+
+## 7. Typosquatting / malicious-package signals
+
+- Names close to popular packages (Levenshtein ≤ 2 vs top-downloaded list)
+- Dependency-confusion: internal package names published to public registry
+- postinstall/preinstall scripts that hit the network or fs
+- Recently-republished packages with new maintainer + high install count
+- Abandoned-then-reclaimed packages
+
+## 8. Container base-image audit
+
+When `Dockerfile` / `Containerfile` present:
+- Base image identified
+- Base pinned by digest (not tag)
+- Image vuln scan (`trivy image`, `grype`)
+- System-package audit (apt/apk/yum)
+- Multi-stage to avoid shipping build tools
+
+## 9. Unused-dependency detection
+
+Declared-but-not-imported. Combine with `alf-dead-code-detector`:
+- `depcheck` (Node), `cargo-udeps` (Rust), `poetry show --tree` + reference analysis (Py), `go mod why` (Go)
+
+Unused deps are attack surface for no value. Remove.
+
+## 10. Upgrade-plan safety
+
+For each outdated dep:
+- SemVer major bump → high risk
+- Release notes mention breaking changes → high
+- Skipped >12 months of releases → medium-high (accumulated)
+- Direct vs transitive (direct = higher test coverage, higher reward)
+- Test coverage around the API surface (higher → lower upgrade risk)
+
+Produce an upgrade plan sorted by `(vuln_severity × reward) / upgrade_risk`, not raw vuln severity.
+
+## 11. Deprecation and EOL awareness
+
+- Deprecated packages on registry (`npm deprecate`, PyPI yanks, Maven relocations)
+- Runtime EOL (Node 16 EOL Sept 2023, Python 3.8 EOL Oct 2024, etc.)
+- LTS support timelines for frameworks (Django LTS, Spring Boot LTS)
+
+Report EOL dates for runtime and major deps.
 
 ---
 

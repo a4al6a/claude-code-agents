@@ -65,6 +65,15 @@ SKILL_DEFS=(
     "alf-system-explorer:alf-system-explorer"
     "alf-system-auditor:alf-system-auditor"
     "alf-accessibility-assessor:alf-accessibility-assessor"
+    "alf-refactoring-advisor:refactoring-catalog"
+    "alf-code-smell-detector:smell-catalog"
+)
+
+# Shared-skill definitions: standalone skill packages installed to ~/.claude/skills/<name>/
+# Source path: <repo-root>/_shared-skills/<name>/
+# These are referenced by frontmatter `skills:` in multiple agents.
+SHARED_SKILL_DEFS=(
+    "design-principles"
 )
 
 # Find skill definition by agent folder name
@@ -162,6 +171,19 @@ list_agents() {
             echo -e "  ${RED}○${NC} $folder (file not found)"
         fi
     done
+    if [[ ${#SHARED_SKILL_DEFS[@]} -gt 0 ]]; then
+        echo ""
+        echo -e "${YELLOW}Shared skills (used by multiple agents):${NC}"
+        echo ""
+        for skill_name in "${SHARED_SKILL_DEFS[@]}"; do
+            local skill_source="$SCRIPT_DIR/_shared-skills/$skill_name"
+            if [[ -d "$skill_source" ]]; then
+                echo -e "  ${GREEN}●${NC} $skill_name"
+            else
+                echo -e "  ${RED}○${NC} $skill_name (source not found)"
+            fi
+        done
+    fi
     echo ""
 }
 
@@ -275,6 +297,20 @@ install_agent() {
     fi
 }
 
+install_shared_skills() {
+    for skill_name in "${SHARED_SKILL_DEFS[@]}"; do
+        local skill_source="$SCRIPT_DIR/_shared-skills/$skill_name"
+        local skill_target="$CLAUDE_SKILLS_DIR/$skill_name"
+        if [[ -d "$skill_source" ]]; then
+            rm -rf "$skill_target"
+            cp -r "$skill_source" "$skill_target"
+            echo -e "  ${GREEN}✓${NC} Installed shared skill: $skill_name"
+        else
+            echo -e "  ${YELLOW}!${NC} Shared skill not found at source: $skill_source"
+        fi
+    done
+}
+
 install_all() {
     local force="$1"
     echo -e "${YELLOW}Installing agents to: $CLAUDE_AGENTS_DIR${NC}"
@@ -288,6 +324,12 @@ install_all() {
         install_agent "$folder" "$force"
         ((count++)) || true
     done
+
+    if [[ ${#SHARED_SKILL_DEFS[@]} -gt 0 ]]; then
+        echo ""
+        echo -e "${YELLOW}Installing shared skills:${NC}"
+        install_shared_skills
+    fi
 
     echo ""
     echo -e "${GREEN}Installation complete!${NC} Installed $count agents."
@@ -341,6 +383,16 @@ uninstall_agent() {
     fi
 }
 
+uninstall_shared_skills() {
+    for skill_name in "${SHARED_SKILL_DEFS[@]}"; do
+        local skill_target="$CLAUDE_SKILLS_DIR/$skill_name"
+        if [[ -d "$skill_target" ]]; then
+            rm -rf "$skill_target"
+            echo -e "  ${GREEN}-${NC} Removed shared skill: $skill_name"
+        fi
+    done
+}
+
 uninstall_all() {
     echo -e "${YELLOW}Removing all agents from: $CLAUDE_AGENTS_DIR${NC}"
     echo ""
@@ -349,6 +401,12 @@ uninstall_all() {
         local folder=$(get_agent_folder "$def")
         uninstall_agent "$folder"
     done
+
+    if [[ ${#SHARED_SKILL_DEFS[@]} -gt 0 ]]; then
+        echo ""
+        echo -e "${YELLOW}Removing shared skills:${NC}"
+        uninstall_shared_skills
+    fi
 
     echo ""
     echo -e "${GREEN}Uninstallation complete!${NC}"

@@ -187,22 +187,24 @@ Where controls that are "not applicable" are excluded from the denominator.
 
 ### Overall Framework Compliance Score
 
-Weighted average of dimension scores. Weights reflect the framework's emphasis areas:
+Weighted average of dimension scores. **Each framework skill owns its own dimension weights** (see `framework-{id}.md`). The defaults below apply only when a framework skill does not override them:
 
-| Dimension | Default Weight | Frameworks with Higher Weight |
-|---|---|---|
-| Access Control | 0.15 | SOX (0.20), HIPAA (0.20) |
-| Encryption | 0.12 | GDPR (0.15), HIPAA (0.15), PCI DSS (0.18) |
-| Audit Logging | 0.12 | SOX (0.18), PCI DSS (0.15), FedRAMP (0.15) |
-| Change Management | 0.10 | SOX (0.15) |
-| Vulnerability Mgmt | 0.10 | PCI DSS (0.15), NIST (0.12), CMMC (0.15) |
-| Data Protection | 0.10 | GDPR (0.20), CCPA (0.20), HIPAA (0.15) |
-| Incident Response | 0.08 | DORA (0.15), NIS2 (0.12) |
-| Backup/Recovery | 0.06 | DORA (0.12), HIPAA (0.10) |
-| Supply Chain | 0.06 | NIS2 (0.15), NIST (0.10), PCI DSS (0.08) |
-| Config Security | 0.06 | FedRAMP (0.10), ISO 27001 (0.08) |
-| API Security | 0.03 | PCI DSS (0.05) |
-| Secure SDLC | 0.02 | SOC 2 (0.05), NIST (0.05) |
+| Dimension | Default Weight |
+|---|---|
+| Access Control | 0.15 |
+| Encryption | 0.12 |
+| Audit Logging | 0.12 |
+| Change Management | 0.10 |
+| Vulnerability Mgmt | 0.10 |
+| Data Protection | 0.10 |
+| Incident Response | 0.08 |
+| Backup/Recovery | 0.06 |
+| Supply Chain | 0.06 |
+| Config Security | 0.06 |
+| API Security | 0.03 |
+| Secure SDLC | 0.02 |
+
+Framework skills provide overrides reflecting that framework's emphasis. For example, GDPR weights Data Protection at 0.25, HIPAA weights Encryption at 0.18, PCI DSS weights Encryption at 0.20. Use the weights from the active framework skill, not these defaults.
 
 ## Report Template
 

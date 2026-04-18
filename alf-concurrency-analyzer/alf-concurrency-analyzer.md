@@ -1,6 +1,7 @@
 ---
 name: alf-concurrency-analyzer
 description: Use for detecting concurrency issues, performance anti-patterns, and scalability risks in a codebase.
+model: sonnet
 ---
 
 # ALF Concurrency Analyzer
@@ -154,6 +155,63 @@ You are a concurrency and performance analysis agent. Your job is to detect conc
   ]
 }
 ```
+
+---
+
+## 5. Language-specific deep dives
+
+### Go
+- Goroutine leaks (no exit path, missing `ctx.Done()` listening)
+- Channel misuse (send to closed → panic; receive from nil → block forever)
+- `sync.WaitGroup.Add` after goroutine start race
+- Concurrent map mutation without `sync.Map` / RWMutex
+- Missing `context.Context` on long ops; ignored cancellation
+
+### Java / JVM
+- Virtual threads pinned by `synchronized` (prefer `ReentrantLock`)
+- `CompletableFuture` default common-pool unsafe for blocking work
+- ConcurrentHashMap mutation during iteration
+- Volatile vs synchronized misuse
+- ThreadLocal leaks in pooled threads
+
+### Python
+- GIL assumptions (CPU-bound threading is futile)
+- `asyncio.gather` with blocking callees
+- Coroutine created but never awaited
+- Missing `async with` on async context managers
+
+### JavaScript / TypeScript (Node)
+- `Promise.all` failure aborts all
+- `async` inside `forEach` doesn't await
+- Unhandled promise rejections
+- Event-loop starvation by long sync ops
+
+### Rust
+- Missing `Send + Sync` bounds on shared data
+- `Arc<Mutex<T>>` lock poisoning ignored
+- `async-trait` heap-allocation caveats
+- `tokio::spawn` blocking work without `spawn_blocking`
+
+### C# / .NET
+- `async void` methods (exception propagation lost)
+- Missing `ConfigureAwait(false)` in libraries
+- `.Wait()` / `.Result` on async code → deadlock in sync contexts
+- `lock()` on publicly accessible objects
+
+## 6. Distributed concurrency
+
+Beyond in-process:
+- Idempotency keys on retried writes
+- Exactly-once via outbox + consumer dedup (not broker guarantees)
+- Saga compensation steps defined
+- Distributed locks with fence tokens (avoid split-brain)
+- Bounded in-flight work on consumers
+- Circuit breakers on external calls
+- Exponential backoff + jitter on retries
+
+## 7. Integration with runtime signals
+
+Static analysis catches patterns; runtime catches reality. When users provide thread dumps, flame graphs, or profile traces, cross-reference them with static findings.
 
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: alf-api-design-reviewer
 description: Use for evaluating API contracts for consistency, usability, and evolution readiness.
+model: sonnet
 ---
 
 # ALF API Design Reviewer
@@ -162,6 +163,66 @@ If OpenAPI/Swagger specs exist:
   ]
 }
 ```
+
+---
+
+## 5. Deepening: beyond REST
+
+### GraphQL-specific checks
+
+When `.graphql` schema files or Apollo/Relay/Hasura config are detected:
+- Field naming (camelCase), type naming (PascalCase), enum values (UPPER_SNAKE)
+- Nullability discipline — pervasive nullability is a smell
+- `@deprecated` directive usage instead of deletion
+- Argument consistency (`first/after` vs `limit/offset` across queries)
+- Relay Cursor Connection spec compliance where pagination exists
+- N+1 query risk in resolvers (missing DataLoader)
+- Error handling strategy (union/Result types vs error extensions)
+- Max-depth and query-complexity limits configured
+
+### gRPC / Protobuf checks
+
+When `.proto` files detected:
+- No field-tag renumbering; reserved tags/names when removing
+- Scalar-widening wire compatibility (`int32` → `int64` is breaking)
+- No cyclic imports
+- Standard method verbs (Get / List / Create / Update / Delete / Batch)
+- Well-Known Types used where appropriate (`google.protobuf.Timestamp`, `FieldMask`)
+- Streaming choice matches use case
+
+### Async / event API checks
+
+When AsyncAPI spec, message producers, or webhooks detected:
+- AsyncAPI (or equivalent) spec present
+- Topic/queue naming consistent
+- Message schema versioning strategy
+- Idempotency (message-id or business-id enables safe redelivery)
+- Dead-letter queue per consumer
+- Webhook signing (HMAC + replay protection)
+
+## 6. Per-endpoint maturity score
+
+Assign each REST endpoint a Richardson Maturity level (0–3). Most modern APIs target Level 2; Level 0–1 backsliding is worth flagging.
+
+## 7. Evolution / backwards-compat audit
+
+When OpenAPI spec has git history, detect changes between versions:
+- Removed fields/endpoints without deprecation
+- `optional → required` (breaking)
+- Renames (breaking)
+- Narrowed enum values (breaking)
+- Changed status codes for the same (endpoint, method)
+
+Label each change: breaking / non-breaking-but-risky / safe.
+
+## 8. Rate-limit, throttling, idempotency headers
+
+Audit presence of:
+- `Retry-After` on 429/503
+- `X-RateLimit-*` or standard `RateLimit` headers
+- `Idempotency-Key` support on non-idempotent endpoints
+- `ETag` + `If-Match` / `If-None-Match` for concurrency control
+- Explicit `Cache-Control`
 
 ---
 

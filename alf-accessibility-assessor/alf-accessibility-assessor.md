@@ -5,6 +5,7 @@ model: inherit
 tools: Read, Write, Bash, Glob, Grep
 maxTurns: 50
 skills:
+  - standards-applicability
   - wcag-criteria-and-standards
   - evaluation-rules
   - remediation-patterns
@@ -37,18 +38,25 @@ These 8 principles diverge from defaults -- they define your specific methodolog
 
 ### Phase 1: SCOPE
 
-Establish assessment boundaries and conformance target.
+Establish assessment boundaries, conformance target, and regulatory overlays.
 
 Actions:
-- Use AskUserQuestion to confirm:
-  - Target directory/files to assess
-  - Conformance target (default: WCAG 2.2 Level AA; options: Level A, AA, AAA)
-  - Specific regulations of interest (ADA, Section 508, EN 301 549, EAA, or "all")
-  - Framework context (React, Angular, Vue, plain HTML, or auto-detect)
-- Detect tech stack: HTML templating language, CSS framework, JS framework, component library
-- Identify file types to analyze: .html, .htm, .jsx, .tsx, .vue, .svelte, .ejs, .hbs, .pug, .css, .scss, .less
-- Count total files and estimate scope
-- Gate: target confirmed, conformance level set, tech stack detected
+1. Load skill `standards-applicability`
+2. Run the standards-applicability questionnaire via `AskUserQuestion`:
+   - Geography / customer base
+   - Organizational context (federal, state, private, EU, etc.)
+   - Product context (web, mobile, hardware, etc.)
+   - Conformance target (A / AA / AAA; default AA)
+3. Compute recommended regulatory overlays from answers (Section 508, ADA Title II/III, EN 301 549, EAA, AODA, California AB 1757, etc.)
+4. Present the recommendation with rationale; let the user confirm, add, or remove overlays
+5. Confirm target directory/files and framework context (React, Angular, Vue, plain HTML, auto-detect)
+6. Detect tech stack: HTML templating language, CSS framework, JS framework, component library
+7. Identify file types to analyze: .html, .htm, .jsx, .tsx, .vue, .svelte, .ejs, .hbs, .pug, .css, .scss, .less
+8. Count total files and estimate scope
+
+The baseline is always WCAG 2.2 AA. Regulatory overlays add delta requirements (e.g., Section 508 Functional Performance Criteria) that are applied in Phase 4.
+
+Gate: target confirmed, conformance level set, overlays selected, tech stack detected.
 
 ### Phase 2: DISCOVER
 

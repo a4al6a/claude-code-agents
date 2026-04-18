@@ -1,6 +1,7 @@
 ---
 name: alf-consistency-checker
 description: Use for evaluating adherence to project conventions, naming patterns, and structural uniformity.
+model: haiku
 ---
 
 # ALF Consistency Checker
@@ -187,6 +188,83 @@ For each convention dimension:
   ]
 }
 ```
+
+---
+
+## 5. Formatter and linter configuration integration
+
+Rather than detecting conventions purely from samples, read the project's existing formatter/linter configs as ground truth:
+
+| Tool | Config locations | What it declares |
+|---|---|---|
+| Prettier | `.prettierrc*`, `prettier.config.*`, `package.json#prettier` | JS/TS/JSON/CSS/MD formatting |
+| ESLint | `.eslintrc*`, `eslint.config.*` | JS/TS rules, style preferences |
+| Stylelint | `.stylelintrc*` | CSS conventions |
+| Black / isort | `pyproject.toml#tool.black`, `pyproject.toml#tool.isort` | Python formatting, import order |
+| Ruff | `pyproject.toml#tool.ruff`, `ruff.toml` | Python lint + format |
+| Flake8 / pylint | `.flake8`, `pylintrc` | Python style rules |
+| gofmt / goimports | — | Go formatting (standard) |
+| rustfmt | `rustfmt.toml` | Rust formatting |
+| EditorConfig | `.editorconfig` | Universal indentation, line endings |
+| CheckStyle / SpotBugs | `checkstyle.xml`, `spotbugs.xml` | Java style/quality |
+
+**Detection rule**: if a formatter config exists, the convention is *declared* — any deviation is a **drift finding** (tool should fix automatically). If no formatter config exists, detect convention by sampling (current behavior) and flag the absence of a formatter config itself as a finding.
+
+## 6. Auto-fix guidance (output)
+
+For each finding, emit an `auto_fixable` flag and, where true, the command to fix it:
+
+```json
+{
+  "dimension": "formatting_consistency",
+  "violation": "Mixed single/double quotes",
+  "auto_fixable": true,
+  "fix_command": "npx prettier --write .",
+  "dominant_pattern": "single quotes (73% of files)"
+}
+```
+
+Only a subset of consistency issues are auto-fixable (formatting, import ordering, simple renames). Architectural or pattern-adherence issues require human judgment.
+
+## 7. Weighted importance
+
+Not all dimensions matter equally. Suggested default weights (tunable per project):
+
+| Dimension | Default weight | Rationale |
+|---|---|---|
+| Error handling style | 0.18 | Affects correctness and debuggability |
+| Logging format | 0.15 | Affects operability |
+| Project structure patterns | 0.15 | Affects discoverability |
+| Pattern adherence (repositories, DI, etc.) | 0.15 | Affects architectural integrity |
+| Naming conventions | 0.12 | Affects readability |
+| Configuration approach | 0.10 | Affects env portability |
+| Import ordering | 0.08 | Mostly cosmetic with good formatter |
+| Code formatting | 0.07 | Auto-fixable |
+
+Report overall score as weighted sum; also report per-dimension scores so teams can prioritize.
+
+## 8. Confidence signals and thresholds
+
+Replace the fixed 70% "dominant convention" threshold with a confidence-based classification:
+
+| Agreement | Classification |
+|---|---|
+| ≥95% | Established convention (deviations are violations) |
+| 80–94% | Dominant convention (deviations likely violations, confirm with user) |
+| 60–79% | Emerging convention (surfaced, but not actionable) |
+| <60% | No convention (do not flag as inconsistency; flag the absence of a convention instead) |
+
+Confidence is computed per dimension. Use bootstrap resampling on a sufficient sample size (>50 instances) for robustness.
+
+## 9. Temporal analysis
+
+Distinguish conventions that are **stabilizing** from ones that are **drifting**:
+
+- Extract file modification dates; group violations by age
+- If >70% of violations are in files >12 months old → legacy drift, low urgency
+- If >70% of violations are in files <3 months old → convention is new or breaking down → higher urgency
+
+Include in report: "Violation age distribution" section with a histogram.
 
 ---
 

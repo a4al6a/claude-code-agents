@@ -1,6 +1,7 @@
 ---
 name: alf-error-handling-reviewer
 description: Use for evaluating exception handling consistency, resilience patterns, and failure mode coverage in a codebase.
+model: sonnet
 ---
 
 # ALF Error Handling Reviewer
@@ -156,6 +157,51 @@ For each supported language, detect:
 - -1 per low-severity issue
 - Bonus: +5 for resilience patterns present (retries, circuit breakers, etc.)
 - Clamped to [0, 100]
+
+---
+
+## 6. Resilience-pattern quality (not just presence)
+
+Assess the **quality** of each pattern:
+
+**Retry** — good: exponential backoff + jitter + bounded attempts, only idempotent ops, respects outer deadline. Poor: fixed interval, unbounded, retries everything including 4xx.
+
+**Circuit breaker** — good: failure-rate threshold over window, gradual half-open probing, meaningful fallback. Poor: trips on single failure, all-at-once recovery, no fallback.
+
+**Timeout** — good: outer timeout < sum of inner timeouts, explicit units, propagated via context. Poor: ambiguous constants, inner exceeds outer, hard-coded.
+
+**Bulkhead** — separate pools per downstream so one slow dep doesn't starve others.
+
+**Fallback** — degraded-mode behavior defined; UX acknowledges degraded state.
+
+## 7. Error taxonomy
+
+Flag code that conflates these categories:
+
+| Category | Semantics | Handling |
+|---|---|---|
+| Domain errors | Business-rule violations | Return as values; don't raise |
+| Validation errors | Bad input | Return to caller (4xx) |
+| Infrastructure errors | External dep failure | Retry / fallback / break |
+| Programming errors | Bugs | Fail fast; don't catch |
+| Cancellation | Client gone / deadline exceeded | Propagate cleanly |
+
+Catching bare `Exception` and treating all uniformly hides the distinction.
+
+## 8. Async / cross-boundary error handling
+
+- Async stack-trace loss (JS Promise chains, Python asyncio) — detect missing stack preservation
+- Exception-to-value conversion at async/thread/process boundaries — audit the conversion site
+- Consistent error contract at service boundaries (don't leak internals)
+- Top-level uncaught-exception handlers defined (worker main, web handler, scheduler)
+
+## 9. Poison-pill / dead-letter handling
+
+For message consumers:
+- Malformed messages rejected to DLQ rather than crash loop
+- Retry policy before DLQ
+- DLQ alerting hinted
+- Replay tooling for DLQ contents
 
 ---
 

@@ -61,6 +61,13 @@ SKILL_DEFS=(
     "alf-system-explorer:alf-system-explorer"
     "alf-system-auditor:alf-system-auditor"
     "alf-accessibility-assessor:alf-accessibility-assessor"
+    "alf-refactoring-advisor:refactoring-catalog"
+    "alf-code-smell-detector:smell-catalog"
+)
+
+# Shared-skill definitions: standalone skill packages at ~/.claude/skills/<name>/
+SHARED_SKILL_DEFS=(
+    "design-principles"
 )
 
 # Parse agent definition fields
@@ -176,6 +183,21 @@ uninstall_agent() {
     fi
 }
 
+uninstall_shared_skills() {
+    local dry_run="$1"
+    for skill_name in "${SHARED_SKILL_DEFS[@]}"; do
+        local skill_target="$CLAUDE_SKILLS_DIR/$skill_name"
+        if [[ -d "$skill_target" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                echo -e "  ${BLUE}would remove${NC} shared skill: $skill_name"
+            else
+                rm -rf "$skill_target"
+                echo -e "  ${GREEN}-${NC} Removed shared skill: $skill_name"
+            fi
+        fi
+    done
+}
+
 uninstall_all() {
     local dry_run="$1"
 
@@ -198,6 +220,12 @@ uninstall_all() {
             ((skipped++)) || true
         fi
     done
+
+    if [[ ${#SHARED_SKILL_DEFS[@]} -gt 0 ]]; then
+        echo ""
+        echo -e "${YELLOW}Shared skills:${NC}"
+        uninstall_shared_skills "$dry_run"
+    fi
 
     echo ""
     if [[ "$dry_run" == "true" ]]; then

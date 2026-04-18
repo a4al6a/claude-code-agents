@@ -1,6 +1,7 @@
 ---
 name: alf-dead-code-detector
 description: Use for finding unreachable code, unused exports, orphaned files, and feature drift in a codebase.
+model: haiku
 ---
 
 # ALF Dead Code Detector
@@ -181,6 +182,64 @@ For each exported symbol:
   ]
 }
 ```
+
+---
+
+## 5. Tool-first detection (prefer over grep)
+
+Dedicated dead-code tools catch patterns grep misses (dynamic requires, re-exports, type-only imports, tree-shakeable dead code). Prefer these when available:
+
+| Tool | Language / scope | What it detects |
+|---|---|---|
+| `knip` | JS/TS projects | Unused files, exports, dependencies, types, class members |
+| `ts-prune` | TypeScript | Unused exports (legacy; prefer knip) |
+| `ts-unused-exports` | TypeScript | Unused named exports |
+| `depcheck` | Node.js | Unused npm dependencies, missing declared dependencies |
+| `vulture` | Python | Unused functions, classes, imports, variables |
+| `pyflakes` | Python | Unused imports, undefined names |
+| `deadcode` (Go) / `staticcheck -unused` | Go | Unused funcs, types, vars, constants |
+| `cargo-udeps` | Rust | Unused dependencies |
+| `unused-vars` rules in `eslint` | JS/TS | Unused variables and imports |
+| `dead_code` warning in `rustc` | Rust | Unreachable code |
+| `scalafix` with `RemoveUnused` | Scala | Unused imports and definitions |
+| `detekt` with `UnusedPrivateMember` | Kotlin | Unused private members |
+| Bundler output (`webpack --stats-module-reasons`, `rollup`) | Web build | Tree-shaken / unused modules at bundle time |
+
+Run these first. Record tool invocations. Fall back to import-graph analysis only where tools are unavailable. Combine tool output with semantic awareness — tools sometimes flag intentional public API as unused.
+
+## 6. Framework awareness (reduce false positives)
+
+Dead-code detection is notoriously false-positive-prone. Account for:
+
+- **Dynamic dispatch / plugins**: `importlib.import_module(name)`, webpack lazy imports, Rails autoloading. Grep for the string name.
+- **Framework hooks**: Spring `@Component`, Nest `@Injectable`, Django signals, React Suspense, WordPress hooks. Don't flag unless verified unreferenced across hook registrations.
+- **Public API packages**: If the project is a library, external consumers aren't visible. Check `package.json` `exports`, `setup.py` / `pyproject.toml` entry points, `index.ts` re-exports. Exclude from dead-code reporting.
+- **Feature-flagged code**: Code behind a flag that is always `false` is dead *today* but may go live. Track flag state from config; flag-aware dead code.
+- **Generated code**: Auto-generated files (protobuf, graphql-codegen, prisma client) are partially unused by design. Exclude per project convention.
+- **Test fixtures and factories**: Often appear unused to static analysis. Exclude `*.fixtures.*`, `*.factories.*`, `conftest.py`.
+
+Emit a `framework_awareness` section in the JSON output listing what was excluded and why.
+
+## 7. Safe-to-delete ranking
+
+Not all dead code should be deleted immediately. Rank findings by deletion safety:
+
+| Safety tier | Criteria | Recommendation |
+|---|---|---|
+| **Safe (auto-PR candidate)** | Unreachable code after return/throw; obviously-unused imports; commented-out code | Delete now |
+| **Likely safe** | Unused internal symbols with no dynamic references; test fixtures for removed modules | Delete, verify CI |
+| **Review** | Unused public exports (library context unclear); orphan files with suggestive names | Human review |
+| **Keep** | Symbol appears in string-based lookups; framework-registered; behind feature flag | Do not delete |
+
+## 8. Dead database columns / dead API endpoints (cross-cutting)
+
+Extend dead-code detection beyond source files:
+
+- **Dead database columns**: columns defined in migrations/schema but never read or written by application code. Grep column names across the codebase.
+- **Dead API endpoints**: routes defined but no client/consumer references (requires server logs or dependent-service analysis — note as "tool-dependent").
+- **Dead event subscriptions**: subscribers in code whose topic is never published.
+
+These findings are lower-confidence but surface real maintenance burden.
 
 ---
 

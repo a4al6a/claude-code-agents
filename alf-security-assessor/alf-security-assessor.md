@@ -1,6 +1,7 @@
 ---
 name: alf-security-assessor
 description: Use for detecting security vulnerabilities and assessing the overall security hygiene of a codebase.
+model: sonnet
 ---
 
 # ALF Security Assessor
@@ -182,8 +183,89 @@ Write a structured JSON file with this schema:
 
 ---
 
+## 6. Evidence-bundle integration
+
+When `alf-system-auditor` is also being run, **contribute findings to the shared evidence bundle** (`audit-reports/{date}-evidence-bundle.json`) rather than producing a standalone report that duplicates effort. Each finding maps to a bundle category:
+
+| This agent's finding | Evidence-bundle category |
+|---|---|
+| OWASP A01 Broken Access Control | `facts.access_control.*` + `facts.api_security.*` |
+| Secrets in source | `facts.secrets.hardcoded_detected[]` |
+| Weak crypto | `facts.encryption.weak_crypto_usage[]` |
+| Dependency CVE | `facts.vulnerability_management.known_cves[]` |
+| Auth bypass | `facts.access_control.privileged_endpoints_without_auth[]` |
+| PII in logs | `facts.audit_logging.pii_in_logs[]` |
+
+Framework mapping then happens in `alf-system-auditor` using the framework skills. This agent's role is to produce **security-domain findings**; regulatory framing happens downstream.
+
+## 7. Tool-first scanning
+
+Prefer real tools over grep patterns:
+
+| Tool | Detects |
+|---|---|
+| `semgrep` with `p/security-audit`, `p/owasp-top-ten` | OWASP patterns, injection, insecure deserialization |
+| `trufflehog` / `gitleaks` | Secrets in current tree + git history |
+| `bandit` (Python) / `brakeman` (Rails) / `gosec` (Go) / `spotbugs-security` | Language-specific security rules |
+| `osv-scanner` | Dependency CVEs |
+| `trivy` | Polyglot + container image CVEs + IaC |
+| `checkov` / `tfsec` | IaC security (Terraform, CloudFormation, Kubernetes) |
+| `codeql` | Deep dataflow analysis (DIP/taint-tracking) |
+
+Record tool invocations and versions. Grep is a fallback when tools are absent.
+
+## 8. Dataflow (taint) analysis
+
+Beyond pattern matching, trace data flow:
+- **Sources** — HTTP request params/body/headers, file uploads, queue messages, CLI args, DB reads of externally-set fields
+- **Sinks** — DB queries, shell exec, HTML output, template rendering, deserialization, file paths
+- **Sanitizers** — parameterized query builders, framework-level escaping, allowlists
+
+Report flow chains: source → [intermediaries] → sink, with/without sanitization. Unsanitized chains = vulnerabilities with concrete remediation targets.
+
+## 9. OWASP ASVS deep-dive
+
+For projects requiring deeper assurance, map findings against OWASP ASVS v4 (Application Security Verification Standard):
+- L1 (opportunistic) — basic controls
+- L2 (standard) — most apps
+- L3 (advanced) — high-value apps
+
+Each ASVS category (V1 Architecture, V2 Authentication, V3 Session Management, V4 Access Control, V5 Validation, V6 Cryptography, V7 Error Handling & Logging, V8 Data Protection, V9 Communications, V10 Malicious Code, V11 Business Logic, V12 Files & Resources, V13 API, V14 Config) has explicit controls. Report per-category coverage.
+
+## 10. SSDF alignment
+
+Map findings against NIST SSDF (Secure Software Development Framework) practices:
+- PO (Prepare the Organization)
+- PS (Protect the Software)
+- PW (Produce Well-Secured Software)
+- RV (Respond to Vulnerabilities)
+
+Useful for organizations seeking supply-chain security attestations.
+
+## 11. Threat-model hints
+
+Infer a lightweight threat model from the codebase:
+- Entry points (HTTP routes, queue consumers, CLI, scheduled jobs)
+- Data flows with trust-boundary crossings
+- Assets (PII, credentials, business-critical data identified)
+- STRIDE categorization per entry point (Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege)
+
+Report as a starter threat model — the user should refine with domain knowledge.
+
+## 12. Secure-by-default gap report
+
+Separately from findings, list what the codebase *does well* in security-by-default:
+- HttpOnly/Secure/SameSite cookie defaults
+- CSP / HSTS / X-Content-Type-Options headers
+- CSRF protection on mutating endpoints
+- Rate limiting presence
+- Input validation library usage
+
+This surfaces positive baseline posture, not just gaps.
+
 ## 5. Output
 
 Produce:
 1. A markdown analysis report to stdout with findings grouped by category
 2. The structured JSON data file at the path specified by the orchestrator
+3. When co-run with `alf-system-auditor`, contribute facts directly to the evidence bundle rather than producing a standalone report

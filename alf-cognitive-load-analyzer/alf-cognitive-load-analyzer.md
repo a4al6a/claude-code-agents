@@ -185,6 +185,64 @@ Top cross-language finding: TypeScript frontend has 2x the coupling score of Pyt
 - It does not install tools without user permission. When tools are missing, it uses fallbacks and recommends installation.
 - Token economy: execute analysis efficiently, prefer structured output over prose.
 
+## D9 — Temporal Coupling (optional extension)
+
+A ninth dimension capturing *hidden* cognitive load: files that keep changing together across git history even when they live in different modules.
+
+### Calculation
+
+Over the last 12 months of commits:
+- `co_change_count` = commits touching both files
+- `independent_change_count` = commits touching one but not the other
+- `coupling_strength` = `co_change_count / (co_change_count + independent_change_count)`
+
+Cross-module pairs only (different top-level packages).
+
+### Normalization and weighting
+
+`D9_raw = P90(coupling_strength across cross-module pairs)`. Sigmoid: midpoint 0.4, steepness 8. Default weight 0.08. Reduce to 0.05 for codebases <6 months old. Skip D9 if `git log` unavailable.
+
+### Why it matters
+
+High temporal coupling across modules means a developer can't reason about either module in isolation — they must understand both because "when I change A, B also breaks". Structural metrics miss this entirely.
+
+### Report addition
+
+```markdown
+### D9 Temporal Coupling
+
+| Pair | Module A | Module B | Co-changes | Strength |
+|---|---|---|---|---|
+| 1 | src/billing/invoice.py | src/reports/monthly.py | 28/50 | 0.56 |
+```
+
+## Diff mode — compare two snapshots
+
+New command `*diff {ref-old} {ref-new}` computes the CLI score for two git refs and reports the delta. Useful for PR review ("did this PR increase or decrease load?"), trend tracking, and refactor validation.
+
+Output example:
+```
+ref-old: a1b2c3d (487/1000)
+ref-new: e4f5g6h (425/1000)
+Delta: -62 (-12.7%) ↓ improvement
+D8 Navigability: 72 → 46 (-26, largest improvement)
+```
+
+## Production vs test code
+
+Track and report production vs test code separately. Test code has different heuristics (heavy use of fixtures, long test methods for end-to-end, etc.) and should not inflate the cognitive-load number that drives refactoring decisions.
+
+Add to methodology:
+- `cli_score_production`: production code only
+- `cli_score_tests`: test code only
+- `cli_score_combined`: both (the headline number)
+
+Most readers care about `cli_score_production`.
+
+## Calibration disclaimer
+
+Sigmoid parameters were calibrated against 10 reference codebases of mixed language and domain. They are not ground-truth. Document this in the methodology section of every report and invite feedback. Re-calibrate when a clear mismatch emerges between reported score and the subjective assessment of the codebase's actual maintainers.
+
 ## JSON Data Output
 
 After completing the analysis and producing the CLI report, you MUST also write a structured JSON data file named `cognitive-load-analyzer-data.json` in the same output directory as the markdown report.

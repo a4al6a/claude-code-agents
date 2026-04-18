@@ -1,6 +1,7 @@
 ---
 name: alf-observability-assessor
 description: Use for assessing logging, tracing, metrics, and monitoring instrumentation for production readiness.
+model: haiku
 ---
 
 # ALF Observability Assessor
@@ -170,6 +171,68 @@ For each logging statement:
   ]
 }
 ```
+
+---
+
+## 5. OpenTelemetry semantic-conventions compliance
+
+Check standard attributes:
+- Resource: `service.name`, `service.version`, `deployment.environment`, `host.*`, `cloud.*`
+- HTTP spans: `http.request.method`, `http.response.status_code`, `url.full`, `url.path`
+- DB: `db.system`, `db.operation.name`, `db.namespace`, `db.collection.name`
+- Messaging: `messaging.system`, `messaging.destination.name`, `messaging.operation.type`
+- Errors: `exception.type`, `exception.message`, `exception.stacktrace` on failed spans
+
+Flag custom attributes used in place of standard ones.
+
+## 6. SRE signal coverage (RED / USE / golden)
+
+| Pattern | Signals |
+|---|---|
+| **RED** (request-driven) | Rate, Errors, Duration (p50/p95/p99) |
+| **USE** (resource-driven) | Utilization, Saturation, Errors |
+| **Four golden signals** | Latency, traffic, errors, saturation |
+
+Map discovered metrics; flag missing categories.
+
+## 7. SLO / error-budget readiness
+
+- SLIs defined in code (latency thresholds, success ratios)
+- SLOs documented (99.9 / 99.95 / etc.)
+- Error-budget policy documented
+- Alert thresholds derive from SLOs (multi-window multi-burn-rate)
+
+## 8. Log/trace cost awareness
+
+- **Metric cardinality risks**: user_id / request_id / URL-with-params as labels
+- **Log volume drivers**: debug logs in production paths; noisy middleware
+- **Trace sampling strategy**: head vs tail vs rate-based
+- **Span explosion per request** (auto-instrumentation without opt-out)
+- **Retention policy documented** per signal type
+
+## 9. PII leak detection beyond logs
+
+Extend PII-in-logs check to traces and metrics:
+- Span attributes containing PII patterns
+- Metric labels derived from user identifiers
+- Exception messages echoing user input
+
+## 10. Async-boundary context propagation
+
+- HTTP clients propagate `traceparent`
+- Message producers include trace context
+- Message consumers restore it
+- Async task schedulers propagate context (Celery, Sidekiq, etc.)
+
+Context-propagation failures produce disconnected traces — defeats the point.
+
+## 11. Background-job / event-consumer observability
+
+Non-HTTP paths need parity:
+- Per-job metrics (count, duration, success)
+- Per-job traces as root spans
+- Structured logging with job_id
+- Consumer-lag alerts (queue depth, processing delay)
 
 ---
 

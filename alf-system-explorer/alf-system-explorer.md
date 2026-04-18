@@ -224,3 +224,74 @@ Behavior: Atlas runs only Phases 1-3 at reduced depth — skips mutation testing
 - `*analyze` — Execute only Phases 1-2 (SCAN + ANALYZE) and output the analysis JSON
 - `*decisions` — Execute decision recovery (Phase 2 Layer 4) and output the decisions document
 - `*validate` — Run the AI code validation checklist on an already-analyzed codebase
+- `*c4` — Generate C4-model diagrams (levels 1–4) as Mermaid
+- `*dataflow` — Generate data-flow diagrams for key request paths
+
+## Enhanced decision recovery
+
+Mine decisions from more sources than just ADRs:
+
+- **Commit trailers**: `Co-authored-by`, `Reviewed-by`, `Closes #`, `Refs #`
+- **PR descriptions**: extract "Why" sections, decision logs
+- **CHANGELOG entries** with rationale
+- **Issue discussions**: arguments for/against, trade-offs raised
+- **Code comments**: multi-line comments explaining non-obvious choices
+- **Commit message bodies**: when descriptive, they often justify choices
+
+For each recovered decision, emit:
+- Context (what forced the decision)
+- Decision (what was chosen)
+- Alternatives considered
+- Consequences (known)
+- Evidence (citation)
+- Confidence (direct / inferred)
+
+## C4 model generation
+
+Generate standard C4 diagrams as Mermaid:
+
+- **Level 1 — Context**: system + external actors + external systems
+- **Level 2 — Containers**: runtime units (web app, mobile app, API, DB)
+- **Level 3 — Components**: major components within a container
+- **Level 4 — Code**: class/module diagram for a specific component (on demand)
+
+C4 is a standard; its generated output is portable across audiences. Produce Levels 1 and 2 for every system. Level 3 per interesting container. Level 4 only for areas under active discussion.
+
+## Data-flow diagrams
+
+For the top 3 user journeys (inferred from routes/handlers and usage evidence):
+- Trace the data flow end-to-end from request to response/persistence
+- Render as Mermaid sequence diagram
+- Annotate with trust boundaries and external systems
+
+Data-flow diagrams are invaluable for security and privacy reviews.
+
+## Evidence-traceability discipline
+
+Every slide claim carries an evidence marker:
+- `[file:path:line]` — direct file reference
+- `[git:sha]` — commit-based claim
+- `[adr:NN]` — ADR-backed
+- `[pr:NNN]` — PR-discussion-backed
+- `[inferred]` — derived claim with no single source
+
+A reader can audit any slide by following the markers. Inferred claims are flagged with lower confidence.
+
+## Export formats
+
+Beyond Marp Markdown:
+- `*walkthrough --html` — Marp-rendered HTML (served via `npx @marp-team/marp-cli`)
+- `*walkthrough --pdf` — PDF export (via Marp CLI)
+- `*walkthrough --reveal` — reveal.js export for web presentation
+
+The agent generates the Marp source; conversion is delegated to Marp CLI (which the user invokes).
+
+## Audience targeting
+
+Support distinct narrative tracks for the same codebase:
+
+- **For engineers joining the team** — detailed onboarding walkthrough with code pointers
+- **For technical reviewers** — decision recovery focus, trade-off analysis
+- **For executive audiences** — high-level context, business value, risk register
+
+Generate different decks from the same analysis JSON using audience-specific templates.

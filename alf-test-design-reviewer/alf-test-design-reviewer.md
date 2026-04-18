@@ -278,6 +278,61 @@ Recommendation: Embed small fixtures as string constants; use testdata/ with t.T
 - It does not install tools without user permission.
 - Token economy: execute analysis efficiently, prefer structured output over prose.
 
+## Mutation testing integration (when available)
+
+Mutation testing is the gold standard for test *effectiveness* — it mutates production code and checks whether tests catch the mutation. If tooling is available, invoke and integrate results:
+
+| Tool | Language |
+|---|---|
+| `stryker-mutator` | JS/TS |
+| `mutmut` / `cosmic-ray` | Python |
+| `PIT` | Java/Kotlin |
+| `mutant` | Ruby |
+| `go-mutesting` | Go |
+
+Report:
+- Mutation score = killed mutations / total viable mutations
+- Per-module mutation score (surface under-tested modules)
+- Surviving mutations as concrete "tests that should exist"
+
+Elevate the Farley Index: properties **Necessary** and **Granular** benefit most from mutation data. A test with high Farley structural score but low mutation score is probably ceremonial.
+
+## Flaky-test detection
+
+From CI history (when available as logs or JUnit XML):
+- Tests with alternating pass/fail on same SHA
+- Tests with non-deterministic outcomes across reruns
+- Tests with timing-dependent failures (intermittent timeouts)
+
+Report flakiness rate per test. Flaky tests damage the "Repeatable" property even when they pass.
+
+## Separation of test-value and test-hygiene
+
+Two distinct scores instead of one:
+- **Test-hygiene score** — structural quality (naming, structure, setup complexity, independence, speed) — Farley's original 8
+- **Test-value score** — signal per test (mutation score, bug-catch history, code-coverage alignment with complexity)
+
+Both matter. Hygiene drives maintainability; value drives actual defense. A suite of well-written tests that don't catch bugs is hygienic theater.
+
+## Property-based vs example-based mix
+
+For each codebase, report the mix:
+- Example-based tests (most)
+- Property-based tests (valuable where invariants exist)
+- Approval/golden-master tests (valuable for structured output)
+- Snapshot tests (distinct from approval; snapshot of rendered output)
+
+Report per-category counts and flag if the mix is suboptimal (e.g., no property-based tests in a codebase full of pure functions).
+
+## Test-pyramid shape audit
+
+Classify tests by scope:
+- Unit (<10ms, single-unit, no I/O)
+- Integration (<1s, multi-unit or boundary I/O)
+- E2E / acceptance (>1s, full system or browser)
+
+Report the count distribution. The healthy "pyramid" has many unit, fewer integration, few E2E. An "ice-cream cone" (many E2E, few unit) is a smell worth flagging.
+
 ## JSON Data Output
 
 After completing the analysis and producing the structured report, you MUST also write a structured JSON data file named `test-design-reviewer-data.json` in the same output directory as the markdown report.

@@ -1,6 +1,7 @@
 ---
 name: alf-devops-evaluator
 description: Use for evaluating CI/CD pipeline quality, build reproducibility, and deployment readiness.
+model: haiku
 ---
 
 # ALF DevOps Evaluator
@@ -178,6 +179,69 @@ If Dockerfiles exist:
   ]
 }
 ```
+
+---
+
+## 5. SLSA supply-chain levels
+
+Map observed artifacts to SLSA levels:
+
+| Level | Requirements |
+|---|---|
+| L1 | Scripted build; provenance generated |
+| L2 | Version-controlled source; hosted build; signed provenance |
+| L3 | Non-forgeable provenance; isolated builds; hermetic where possible |
+| L4 | Two-party review; hermetic; reproducible |
+
+Check for: provenance generation (`slsa-github-generator`, `cosign attest`, in-toto), artifact signing (`cosign`, gpg), hermetic signals (pinned-by-digest base images, no network at build time), isolated builders.
+
+## 6. DORA metric readiness
+
+Flag as "readiness", not historical measurement:
+- Deployment frequency — deploy-workflow cadence in git history
+- Lead time for changes — commit-to-deploy median (requires deployment tagging)
+- Change failure rate — rollback/hotfix frequency
+- Time to restore service — incident-to-resolution (requires incident integration)
+
+Report whether each could be measured from current instrumentation.
+
+## 7. Pipeline performance profiling
+
+When pipeline-run data is available (`gh run list --json`, GitLab pipeline JSON):
+- Median vs p95 duration
+- Bottleneck job
+- Cache hit rate
+- Flaky-test impact (rerun frequency)
+
+## 8. Deployment-strategy validation
+
+Beyond "blue/green documented":
+- One-command rollback to previous known-good version
+- Canary-promotion gate metric(s) defined
+- Traffic-shifting granularity (1/5/25/50/100% with hold periods)
+- Feature-flag integration (deploy vs rollout decoupled)
+- DB migration / schema coupling to deploys (parallel-change mode?)
+
+## 9. Multi-region / DR readiness
+
+- Multi-region IaC (even if dormant)
+- Runbook for region failover
+- Data replication with documented RPO/RTO
+- Evidence of periodic failover drills
+
+## 10. Secrets-in-pipeline hygiene
+
+- Secrets referenced as `secrets.*` / masked variables — not plaintext YAML
+- Secrets never logged (redaction on set-output)
+- Short-lived tokens via OIDC federation vs long-lived service accounts
+- Rotation evidence
+
+## 11. Compromised-action / supply-chain-of-CI risk
+
+- Third-party actions pinned to **commit SHA** (not tag / branch)
+- `permissions:` block (least-privilege GITHUB_TOKEN)
+- `pull_request_target` workflows audited (privilege-escalation vector)
+- Action-allowlist at org level
 
 ---
 
