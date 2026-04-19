@@ -1,9 +1,10 @@
 # Andrea Laforgia's Claude Code Agents
 
-A collection of specialized agents for software development workflows, designed to work together in pipelines for comprehensive problem-solving and code quality improvement. All agents use the `alf-` namespace prefix.
+A collection of specialized agents for software development workflows, designed to work together in pipelines for comprehensive problem-solving and code quality improvement. Most agents use the `alf-` namespace prefix; the CI-pipeline reviewer (`sherlock`) is named for its role rather than namespaced.
 
 ## What's new (April 2026 refactor)
 
+- **sherlock** (experimental) — a new CI-native code reviewer designed to run as a pipeline gate. Reviews only the PR/MR diff, emits a strict JSON verdict, posts inline comments on problematic lines, and sets the process exit code for branch-protection gating. Currently on the `experimental-ci-sherlock` branch while alpha testing gets underway.
 - **alf-system-auditor** refactored to a thin generic engine that produces a shared **evidence bundle** once, then maps facts to each selected framework via per-framework skills (`framework-sox.md`, `framework-gdpr.md`, etc.). Adding a new framework is now a skill addition, not an agent change.
 - **Applicability questionnaires** in `alf-system-auditor` and `alf-accessibility-assessor` — users answer data-type and geography questions, and the agent recommends which frameworks/standards actually apply before the audit runs.
 - **Shared design-principles skill** (`_shared-skills/design-principles/`) — one canonical reference for SOLID, GRASP, DRY, KISS, YAGNI, Law of Demeter, etc. Consumed by `alf-clean-coder`, `alf-code-smell-detector`, `alf-refactoring-advisor`, `alf-ddd-assessor`.
@@ -97,6 +98,16 @@ Detects security vulnerabilities and assesses the overall security hygiene of a 
 Evaluates exception handling consistency, resilience patterns, and failure mode coverage. Analyzes catch-all patterns, swallowed exceptions, retry/circuit-breaker usage, graceful degradation, and missing error paths.
 
 **Use when:** You want to assess how robustly your code handles failures and edge cases.
+
+### CI Pipeline Agents (Experimental)
+
+#### sherlock
+
+A CI-native code reviewer, structurally different from the other agents: it is designed to run inside a GitHub Actions or GitLab CI job rather than interactively. It reviews only the PR/MR diff, emits a strict JSON verdict (`code-review-verdict.json`) with severity-graded findings and line anchors, and is consumed by a thin wrapper that (a) sets the process exit code so branch-protection rules can gate on it, and (b) posts one inline review comment per finding on the exact problematic line. Ships with an `ADVISORY` mode for phased rollout and per-repo tuning via `.sherlock.yml` (thresholds, protected paths, muted categories, rule overrides).
+
+**Use when:** You want an LLM reviewer that can actually block merges — not just leave advisory comments — on PRs or MRs.
+
+**Status:** Experimental. Lives on the `experimental-ci-sherlock` branch. Design is deliberate and the scripts are plumbed, but it hasn't yet been exercised against a real PR/MR in a live pipeline. Alpha testers welcome — open an issue or reach out.
 
 ### Architecture & Design Agents
 
@@ -200,6 +211,12 @@ Codebase > alf-system-auditor > Framework Selection > Per-Framework Reports
 Codebase > alf-accessibility-assessor > Assessment Report > Fix > Verification
 ```
 
+### Pipeline 8: PR/MR Review Gate (Experimental)
+
+```
+Pull/Merge Request > sherlock (in CI) > JSON verdict > {inline comments + pass/fail exit code}
+```
+
 ## Installation
 
 ### Quick Install (All Agents)
@@ -218,6 +235,7 @@ cd claude-code-agents
 ./install.sh install                           # Install all agents (interactive)
 ./install.sh install -f                        # Install all agents (force overwrite)
 ./install.sh install alf-code-smell-detector   # Install specific agent
+./install.sh install sherlock                  # Install the CI reviewer
 ./install.sh uninstall alf-code-smell-detector # Uninstall specific agent
 ./install.sh uninstall                         # Uninstall all agents
 ```
@@ -258,3 +276,7 @@ cp -r _shared-skills/design-principles ~/.claude/skills/
 The shared `design-principles` skill is the canonical reference for SOLID / GRASP / DRY / KISS / YAGNI / Law of Demeter and is consumed by `alf-clean-coder`, `alf-code-smell-detector`, `alf-refactoring-advisor`, and `alf-ddd-assessor`. `install.sh` handles this automatically.
 
 After installation, restart Claude Code or start a new session to use the agents.
+
+### sherlock (CI-only)
+
+Unlike the other agents, `sherlock` is designed to run inside a CI job, not interactively. `install.sh install sherlock` copies the agent definition to `~/.claude/agents/` as usual, but the CI wrappers (GitHub Actions workflow, GitLab CI job, posting scripts, `.sherlock.yml.example`) live in `sherlock/examples/` and are meant to be vendored into the target repo's CI configuration. See `sherlock/README.md` for configuration reference and rollout guidance.
