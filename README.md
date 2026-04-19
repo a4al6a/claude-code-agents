@@ -205,7 +205,7 @@ Codebase > alf-accessibility-assessor > Assessment Report > Fix > Verification
 ### Quick Install (All Agents)
 
 ```bash
-git clone https://github.com/yourusername/claude-code-agents.git
+git clone https://github.com/a4al6a/claude-code-agents.git
 cd claude-code-agents
 ./install.sh
 ```
